@@ -1,6 +1,7 @@
 import app from '../app'
+import env from '../util/validate-env'
 
-const PORT = process.env.PORT || 3000
+const PORT = env.PORT || 3000
 
 app.listen(PORT, () => {
 	console.log(`Server running on port ${PORT}`)

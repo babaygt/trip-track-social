@@ -4,11 +4,14 @@ import morgan from 'morgan'
 import cookieParser from 'cookie-parser'
 import path from 'path'
 
+import { connectToDatabase } from './config/database-connection'
 import indexRouter from './routes/index'
 
 dotenv.config()
 
 const app: Express = express()
+
+connectToDatabase()
 
 app.use(express.json())
 app.use(cookieParser())
