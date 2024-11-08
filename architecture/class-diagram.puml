@@ -1,0 +1,126 @@
+@startuml TripTrack-Models
+
+' Style configurations
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+package "Trip Track Domain Models" {
+
+  ' Enums
+  enum TravelMode {
+    DRIVING
+    BICYCLING
+    TRANSIT
+    WALKING
+  }
+
+  enum Visibility {
+    PUBLIC
+    PRIVATE
+    FOLLOWERS
+  }
+
+  ' Value Objects
+  class Point << (V,lightblue) value object >> {
+    - lat: number
+    - lng: number
+  }
+
+  ' Entities
+  class User {
+    - id: ObjectId
+    - name: string
+    - username: string {unique}
+    - email: string {unique}
+    - password: string
+    - bio: string
+    - profilePicture: string
+    - isAdmin: boolean
+    - isProtected: boolean
+    - createdAt: Date
+    - updatedAt: Date
+    --
+    + verifyPassword(password: string): Promise<boolean>
+    - hashPassword(): void
+  }
+
+  class Route {
+    - id: ObjectId
+    - title: string
+    - creator: ObjectId
+    - startPoint: Point
+    - endPoint: Point
+    - waypoints: Point[]
+    - travelMode: TravelMode
+    - description: string
+    - totalDistance: number
+    - totalTime: number
+    - visibility: Visibility
+    - tags: string[]
+    - createdAt: Date
+    - updatedAt: Date
+  }
+
+  class Comment {
+    - id: ObjectId
+    - user: ObjectId
+    - content: string
+    - createdAt: Date
+  }
+
+  class Message {
+    - id: ObjectId
+    - conversation: ObjectId
+    - sender: ObjectId
+    - content: string
+    - readBy: ObjectId[]
+    - createdAt: Date
+  }
+
+  class Conversation {
+    - id: ObjectId
+    - participants: ObjectId[]
+    - lastMessage: ObjectId
+    - createdAt: Date
+    - updatedAt: Date
+  }
+
+  ' Relationships with multiplicity
+  User "1" *-- "*" Route : creates >
+  User "1" *-- "*" Comment : writes >
+  User "*" -- "*" User : follows >
+  User "*" -- "*" Route : bookmarks >
+  User "*" -- "*" Conversation : participates >
+  
+  Route "*" -- "1" User : created by >
+  Route "1" *-- "*" Comment : has >
+  Route "1" *-- "2..*" Point : contains >
+  Route "1" -- "1" TravelMode : uses >
+  Route "1" -- "1" Visibility : has >
+  
+  Conversation "1" *-- "*" Message : contains >
+  Message "*" -- "1" User : sent by >
+  Message "*" -- "*" User : read by >
+
+  ' Notes
+  note right of User : "Handles password hashing\nand verification"
+  
+  note right of Route : "Contains route metadata\nand waypoints"
+  
+  note right of Point : "Immutable value object\nfor coordinates"
+  
+  note right of Message : "Implements real-time\ncommunication"
+
+}
+
+' Legend
+legend right
+  |= Symbol |= Meaning |
+  | * | Composition |
+  | o | Aggregation |
+  | > | Navigation |
+  | (V) | Value Object |
+endlegend
+
+@enduml
