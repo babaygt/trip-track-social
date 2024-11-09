@@ -426,4 +426,90 @@ describe('User Routes', () => {
 			})
 		})
 	})
+
+	describe('GET /users/:userId/followers', () => {
+		const user1Data = {
+			name: 'Test User 1',
+			username: 'testuser1',
+			email: 'test1@example.com',
+			password: 'password123',
+			bio: 'Test bio 1',
+		}
+
+		const user2Data = {
+			name: 'Test User 2',
+			username: 'testuser2',
+			email: 'test2@example.com',
+			password: 'password123',
+			bio: 'Test bio 2',
+		}
+
+		it('should return followers for a user', async () => {
+			// Create two users
+			const user1Response = await request(app)
+				.post('/users')
+				.send(user1Data)
+				.expect(201)
+			const user2Response = await request(app)
+				.post('/users')
+				.send(user2Data)
+				.expect(201)
+
+			// Make user2 follow user1
+			await request(app)
+				.post(
+					`/users/${user2Response.body._id}/follow/${user1Response.body._id}`
+				)
+				.expect(200)
+
+			// Get followers of user1
+			const response = await request(app)
+				.get(`/users/${user1Response.body._id}/followers`)
+				.expect(200)
+
+			expect(response.body).toHaveLength(1)
+			expect(response.body[0]._id.toString()).toBe(user2Response.body._id)
+			expect(response.body[0].username).toBe(user2Data.username)
+			expect(response.body[0].name).toBe(user2Data.name)
+			expect(response.body[0]).not.toHaveProperty('password')
+		})
+
+		it('should return empty array for user with no followers', async () => {
+			const userResponse = await request(app)
+				.post('/users')
+				.send(user1Data)
+				.expect(201)
+
+			const response = await request(app)
+				.get(`/users/${userResponse.body._id}/followers`)
+				.expect(200)
+
+			expect(response.body).toHaveLength(0)
+			expect(Array.isArray(response.body)).toBe(true)
+		})
+
+		it('should return 400 when user does not exist', async () => {
+			const nonExistentId = '507f1f77bcf86cd799439011'
+
+			const response = await request(app)
+				.get(`/users/${nonExistentId}/followers`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'User not found',
+			})
+		})
+
+		it('should return 400 for invalid user ID format', async () => {
+			const invalidId = 'invalid-id'
+
+			const response = await request(app)
+				.get(`/users/${invalidId}/followers`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Invalid ID format',
+			})
+		})
+	})
 })
