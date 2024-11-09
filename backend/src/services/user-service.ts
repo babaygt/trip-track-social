@@ -80,4 +80,37 @@ export class UserService extends BaseService<IUser> {
 		if (!updatedUser) throw new Error('Failed to follow user')
 		return updatedUser
 	}
+
+	async unfollowUser(userId: string, targetUserId: string): Promise<IUser> {
+		if (userId === targetUserId) {
+			throw new Error('Users cannot unfollow themselves')
+		}
+
+		const [user, targetUser] = await Promise.all([
+			this.findById(userId),
+			this.findById(targetUserId),
+		])
+
+		if (!user || !targetUser) {
+			throw new Error('User not found')
+		}
+
+		const isFollowing = user.following.some(
+			(followedUser) =>
+				followedUser._id?.toString() === targetUserId ||
+				followedUser.toString() === targetUserId
+		)
+		if (!isFollowing) {
+			throw new Error('Not following this user')
+		}
+
+		await Promise.all([
+			this.update(userId, { $pull: { following: targetUserId } }),
+			this.update(targetUserId, { $pull: { followers: userId } }),
+		])
+
+		const updatedUser = await this.findById(userId)
+		if (!updatedUser) throw new Error('Failed to unfollow user')
+		return updatedUser
+	}
 }

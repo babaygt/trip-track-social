@@ -229,4 +229,76 @@ describe('UserService', () => {
 			)
 		})
 	})
+
+	// Unfollow user tests
+
+	describe('unfollowUser', () => {
+		const user1Data = {
+			name: 'Test User 1',
+			username: 'testuser1',
+			email: 'test1@example.com',
+			password: 'password123',
+			bio: 'Test bio 1',
+		}
+
+		const user2Data = {
+			name: 'Test User 2',
+			username: 'testuser2',
+			email: 'test2@example.com',
+			password: 'password123',
+			bio: 'Test bio 2',
+		}
+
+		it('should successfully unfollow another user', async () => {
+			const user1 = await userService.createUser(user1Data)
+			const user2 = await userService.createUser(user2Data)
+
+			// First follow the user
+			await userService.followUser(user1.id, user2.id)
+
+			// Then unfollow
+			const updatedUser = await userService.unfollowUser(user1.id, user2.id)
+
+			expect(updatedUser.following).toHaveLength(0)
+
+			// Verify target user's followers were updated
+			const targetUser = await userService.findById(user2.id)
+			expect(targetUser?.followers).toHaveLength(0)
+		})
+
+		it('should throw error when user tries to unfollow themselves', async () => {
+			const user = await userService.createUser(user1Data)
+
+			await expect(userService.unfollowUser(user.id, user.id)).rejects.toThrow(
+				'Users cannot unfollow themselves'
+			)
+		})
+
+		it('should throw error when user tries to unfollow non-existent user', async () => {
+			const user = await userService.createUser(user1Data)
+			const nonExistentId = '507f1f77bcf86cd799439011'
+
+			await expect(
+				userService.unfollowUser(user.id, nonExistentId)
+			).rejects.toThrow('User not found')
+		})
+
+		it('should throw error when user tries to unfollow someone they do not follow', async () => {
+			const user1 = await userService.createUser(user1Data)
+			const user2 = await userService.createUser(user2Data)
+
+			await expect(
+				userService.unfollowUser(user1.id, user2.id)
+			).rejects.toThrow('Not following this user')
+		})
+
+		it('should throw error for invalid user ID format', async () => {
+			const user = await userService.createUser(user1Data)
+			const invalidId = 'invalid-id'
+
+			await expect(
+				userService.unfollowUser(user.id, invalidId)
+			).rejects.toThrow('Invalid ID format')
+		})
+	})
 })
