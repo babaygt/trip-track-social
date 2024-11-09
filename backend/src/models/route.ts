@@ -22,6 +22,10 @@ export interface IRoute extends Document {
 	tags: string[]
 	createdAt: Date
 	updatedAt: Date
+	commentCount: number
+	likeCount: number
+	isOwner(userId: string): boolean
+	isLikedBy(userId: string): boolean
 }
 
 const RouteSchema = new Schema<IRoute>(
