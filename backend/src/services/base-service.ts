@@ -22,4 +22,9 @@ export abstract class BaseService<T extends Document> {
 	async findOne(filter: FilterQuery<T>): Promise<T | null> {
 		return this.model.findOne(filter)
 	}
+
+	async create(data: Partial<T>): Promise<T> {
+		const entity = new this.model(data)
+		return entity.save()
+	}
 }
