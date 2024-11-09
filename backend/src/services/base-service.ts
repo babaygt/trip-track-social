@@ -57,4 +57,23 @@ export abstract class BaseService<T extends Document> {
 	async count(filter: FilterQuery<T> = {}): Promise<number> {
 		return this.model.countDocuments(filter)
 	}
+
+	async findWithPagination(
+		filter: FilterQuery<T> = {},
+		page: number = 1,
+		limit: number = 10,
+		options: QueryOptions = {}
+	): Promise<{ data: T[]; total: number; pages: number }> {
+		const skip = (page - 1) * limit
+		const [data, total] = await Promise.all([
+			this.model.find(filter, null, { ...options, skip, limit }),
+			this.model.countDocuments(filter),
+		])
+
+		return {
+			data,
+			total,
+			pages: Math.ceil(total / limit),
+		}
+	}
 }
