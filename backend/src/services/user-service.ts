@@ -47,4 +47,37 @@ export class UserService extends BaseService<IUser> {
 		if (!updatedUser) throw new Error('Failed to update password')
 		return updatedUser
 	}
+
+	async followUser(userId: string, targetUserId: string): Promise<IUser> {
+		if (userId === targetUserId) {
+			throw new Error('Users cannot follow themselves')
+		}
+
+		const [user, targetUser] = await Promise.all([
+			this.findById(userId),
+			this.findById(targetUserId),
+		])
+
+		if (!user || !targetUser) {
+			throw new Error('User not found')
+		}
+
+		const isAlreadyFollowing = user.following.some(
+			(followedUser) =>
+				followedUser._id?.toString() === targetUserId ||
+				followedUser.toString() === targetUserId
+		)
+		if (isAlreadyFollowing) {
+			throw new Error('Already following this user')
+		}
+
+		await Promise.all([
+			this.update(userId, { $push: { following: targetUserId } }),
+			this.update(targetUserId, { $push: { followers: userId } }),
+		])
+
+		const updatedUser = await this.findById(userId)
+		if (!updatedUser) throw new Error('Failed to follow user')
+		return updatedUser
+	}
 }

@@ -155,4 +155,78 @@ describe('UserService', () => {
 			).rejects.toThrow('Invalid ID format')
 		})
 	})
+
+	// Follow user tests
+
+	describe('followUser', () => {
+		const user1Data = {
+			name: 'Test User 1',
+			username: 'testuser1',
+			email: 'test1@example.com',
+			password: 'password123',
+			bio: 'Test bio 1',
+		}
+
+		const user2Data = {
+			name: 'Test User 2',
+			username: 'testuser2',
+			email: 'test2@example.com',
+			password: 'password123',
+			bio: 'Test bio 2',
+		}
+
+		it('should successfully follow another user', async () => {
+			const user1 = await userService.createUser(user1Data)
+			const user2 = await userService.createUser(user2Data)
+
+			const updatedUser = await userService.followUser(user1.id, user2.id)
+
+			expect(updatedUser.following).toHaveLength(1)
+			expect(updatedUser.following[0]._id.toString()).toBe(user2.id)
+
+			// Verify target user's followers were updated
+			const targetUser = await userService.findById(user2.id)
+			expect(targetUser?.followers).toHaveLength(1)
+			expect(targetUser?.followers[0]._id.toString()).toBe(user1.id)
+		})
+
+		it('should throw error when user tries to follow themselves', async () => {
+			const user = await userService.createUser(user1Data)
+
+			await expect(userService.followUser(user.id, user.id)).rejects.toThrow(
+				'Users cannot follow themselves'
+			)
+		})
+
+		it('should throw error when user tries to follow non-existent user', async () => {
+			const user = await userService.createUser(user1Data)
+			const nonExistentId = '507f1f77bcf86cd799439011'
+
+			await expect(
+				userService.followUser(user.id, nonExistentId)
+			).rejects.toThrow('User not found')
+		})
+
+		it('should throw error when user tries to follow someone they already follow', async () => {
+			const user1 = await userService.createUser(user1Data)
+			const user2 = await userService.createUser(user2Data)
+
+			// First follow
+			await userService.followUser(user1.id, user2.id)
+
+			// Try to follow again
+			await expect(userService.followUser(user1.id, user2.id)).rejects.toThrow(
+				'Already following this user'
+			)
+		})
+
+		it('should throw error for invalid user ID format', async () => {
+			const user = await userService.createUser(user1Data)
+			const invalidId = 'invalid-id'
+
+			await expect(userService.followUser(user.id, invalidId)).rejects.toThrow(
+				'Invalid ID format'
+			)
+		})
+	})
 })
