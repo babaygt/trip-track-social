@@ -48,4 +48,9 @@ export abstract class BaseService<T extends Document> {
 		}
 		return this.model.findByIdAndDelete(id)
 	}
+
+	async exists(filter: FilterQuery<T>): Promise<boolean> {
+		const count = await this.model.countDocuments(filter)
+		return count > 0
+	}
 }
