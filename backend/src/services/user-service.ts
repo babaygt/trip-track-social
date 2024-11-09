@@ -18,4 +18,12 @@ export class UserService extends BaseService<IUser> {
 		const hashedPassword = await bcrypt.hash(userData.password!, 10)
 		return this.create({ ...userData, password: hashedPassword })
 	}
+
+	async verifyPassword(userId: string, password: string): Promise<boolean> {
+		const user = await this.findById(userId)
+		if (!user) {
+			throw new Error('User not found')
+		}
+		return bcrypt.compare(password, user.password)
+	}
 }

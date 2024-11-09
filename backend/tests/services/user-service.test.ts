@@ -8,6 +8,8 @@ describe('UserService', () => {
 		userService = new UserService()
 	})
 
+	// Create user tests
+
 	describe('createUser', () => {
 		const validUserData = {
 			name: 'Test User',
@@ -53,6 +55,44 @@ describe('UserService', () => {
 					email: 'different@example.com',
 				})
 			).rejects.toThrow('Username already exists')
+		})
+	})
+
+	// Verify password tests
+
+	describe('verifyPassword', () => {
+		const validUserData = {
+			name: 'Test User',
+			username: 'testuser',
+			email: 'test@example.com',
+			password: 'password123',
+			bio: 'Test bio',
+		}
+
+		it('should return true for correct password', async () => {
+			const user = await userService.createUser(validUserData)
+			const isValid = await userService.verifyPassword(user.id, 'password123')
+			expect(isValid).toBe(true)
+		})
+
+		it('should return false for incorrect password', async () => {
+			const user = await userService.createUser(validUserData)
+			const isValid = await userService.verifyPassword(user.id, 'wrongpassword')
+			expect(isValid).toBe(false)
+		})
+
+		it('should throw error for non-existent user', async () => {
+			const nonExistentId = '507f1f77bcf86cd799439011' // Valid MongoDB ObjectId format
+			await expect(
+				userService.verifyPassword(nonExistentId, 'password123')
+			).rejects.toThrow('User not found')
+		})
+
+		it('should throw error for invalid user ID format', async () => {
+			const invalidId = 'invalid-id'
+			await expect(
+				userService.verifyPassword(invalidId, 'password123')
+			).rejects.toThrow('Invalid ID format')
 		})
 	})
 })
