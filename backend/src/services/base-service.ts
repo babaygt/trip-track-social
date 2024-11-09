@@ -53,4 +53,8 @@ export abstract class BaseService<T extends Document> {
 		const count = await this.model.countDocuments(filter)
 		return count > 0
 	}
+
+	async count(filter: FilterQuery<T> = {}): Promise<number> {
+		return this.model.countDocuments(filter)
+	}
 }
