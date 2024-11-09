@@ -16,4 +16,21 @@ router.post('/', async (req: Request, res: Response) => {
 	}
 })
 
+// Update password
+router.put('/:userId/password', async (req: Request, res: Response) => {
+	try {
+		const { oldPassword, newPassword } = req.body
+		const user = await userService.updatePassword(
+			req.params.userId,
+			oldPassword,
+			newPassword
+		)
+		res.json(user)
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : 'An unknown error occurred'
+		res.status(400).json({ message: errorMessage })
+	}
+})
+
 export default router
