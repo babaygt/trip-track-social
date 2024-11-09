@@ -41,4 +41,11 @@ export abstract class BaseService<T extends Document> {
 		}
 		return this.model.findByIdAndUpdate(id, data, { new: true })
 	}
+
+	async delete(id: string): Promise<T | null> {
+		if (!Types.ObjectId.isValid(id)) {
+			throw new Error('Invalid ID format')
+		}
+		return this.model.findByIdAndDelete(id)
+	}
 }
