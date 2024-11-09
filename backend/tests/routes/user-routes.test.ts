@@ -598,4 +598,58 @@ describe('User Routes', () => {
 			})
 		})
 	})
+
+	// Get user by ID
+
+	describe('GET /users/:userId', () => {
+		const userData = {
+			name: 'Test User',
+			username: 'testuser',
+			email: 'test@example.com',
+			password: 'password123',
+			bio: 'Test bio',
+		}
+
+		it('should return user by ID', async () => {
+			// First create a user
+			const createResponse = await request(app)
+				.post('/users')
+				.send(userData)
+				.expect(201)
+
+			// Get user by ID
+			const response = await request(app)
+				.get(`/users/${createResponse.body._id}`)
+				.expect(200)
+
+			expect(response.body._id).toBe(createResponse.body._id)
+			expect(response.body.name).toBe(userData.name)
+			expect(response.body.username).toBe(userData.username)
+			expect(response.body.email).toBe(userData.email)
+			expect(response.body.bio).toBe(userData.bio)
+			expect(response.body).not.toHaveProperty('password')
+		})
+
+		it('should return 404 when user does not exist', async () => {
+			const nonExistentId = '507f1f77bcf86cd799439011'
+
+			const response = await request(app)
+				.get(`/users/${nonExistentId}`)
+				.expect(404)
+
+			expect(response.body).toEqual({
+				message: 'User not found',
+			})
+		})
+
+		it('should return 400 for invalid user ID format', async () => {
+			const invalidId = 'invalid-id'
+
+			const response = await request(app).get(`/users/${invalidId}`).expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Invalid ID format',
+			})
+		})
+	})
 })

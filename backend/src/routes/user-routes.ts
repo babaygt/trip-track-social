@@ -16,6 +16,21 @@ router.post('/', async (req: Request, res: Response) => {
 	}
 })
 
+// Get user by ID
+router.get('/:userId', async (req: Request, res: Response) => {
+	try {
+		const user = await userService.findById(req.params.userId)
+		if (!user) {
+			return res.status(404).json({ message: 'User not found' })
+		}
+		res.json(user)
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : 'An unknown error occurred'
+		res.status(400).json({ message: errorMessage })
+	}
+})
+
 // Update password
 router.put('/:userId/password', async (req: Request, res: Response) => {
 	try {
