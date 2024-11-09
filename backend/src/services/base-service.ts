@@ -1,4 +1,11 @@
-import { Model, Document, FilterQuery, QueryOptions, Types } from 'mongoose'
+import {
+	Model,
+	Document,
+	FilterQuery,
+	QueryOptions,
+	Types,
+	UpdateQuery,
+} from 'mongoose'
 
 export abstract class BaseService<T extends Document> {
 	constructor(private model: Model<T>) {
@@ -26,5 +33,12 @@ export abstract class BaseService<T extends Document> {
 	async create(data: Partial<T>): Promise<T> {
 		const entity = new this.model(data)
 		return entity.save()
+	}
+
+	async update(id: string, data: UpdateQuery<T>): Promise<T | null> {
+		if (!Types.ObjectId.isValid(id)) {
+			throw new Error('Invalid ID format')
+		}
+		return this.model.findByIdAndUpdate(id, data, { new: true })
 	}
 }
