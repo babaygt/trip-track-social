@@ -301,4 +301,59 @@ describe('UserService', () => {
 			).rejects.toThrow('Invalid ID format')
 		})
 	})
+
+	// Get followers tests
+	describe('getFollowers', () => {
+		const userData = {
+			name: 'John Doe',
+			username: 'johndoe',
+			email: 'john@example.com',
+			password: 'password123',
+			bio: 'Hello, I am John!',
+		}
+
+		it('should return followers for a user', async () => {
+			const user1 = await userService.createUser(userData)
+			const user2 = await userService.createUser({
+				name: 'Jane Smith',
+				username: 'janesmith',
+				email: 'jane@example.com',
+				password: 'password123',
+				bio: 'Hello, I am Jane!',
+			})
+
+			// user2 follows user1
+			await userService.followUser(user2.id, user1.id)
+
+			const followers = await userService.getFollowers(user1.id)
+
+			expect(followers).toHaveLength(1)
+			expect(followers[0].id).toBe(user2.id)
+			expect(followers[0].username).toBe('janesmith')
+		})
+
+		it('should return an empty array if user has no followers', async () => {
+			const user = await userService.createUser(userData)
+
+			const followers = await userService.getFollowers(user.id)
+
+			expect(followers).toHaveLength(0)
+		})
+
+		it('should throw an error if user does not exist', async () => {
+			const nonExistentId = '507f1f77bcf86cd799439011'
+
+			await expect(userService.getFollowers(nonExistentId)).rejects.toThrow(
+				'User not found'
+			)
+		})
+
+		it('should throw an error for invalid user ID format', async () => {
+			const invalidId = 'invalid-id'
+
+			await expect(userService.getFollowers(invalidId)).rejects.toThrow(
+				'Invalid ID format'
+			)
+		})
+	})
 })
