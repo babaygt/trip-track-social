@@ -81,4 +81,16 @@ router.get('/:userId/followers', async (req: Request, res: Response) => {
 	}
 })
 
+// Get following
+router.get('/:userId/following', async (req: Request, res: Response) => {
+	try {
+		const following = await userService.getFollowing(req.params.userId)
+		res.json(following)
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : 'An unknown error occurred'
+		res.status(400).json({ message: errorMessage })
+	}
+})
+
 export default router
