@@ -18,4 +18,8 @@ export abstract class BaseService<T extends Document> {
 		}
 		return this.model.findById(id)
 	}
+
+	async findOne(filter: FilterQuery<T>): Promise<T | null> {
+		return this.model.findOne(filter)
+	}
 }
