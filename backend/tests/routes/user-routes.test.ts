@@ -174,4 +174,134 @@ describe('User Routes', () => {
 			})
 		})
 	})
+
+	// Follow user tests
+
+	describe('POST /users/:userId/follow/:targetUserId', () => {
+		const user1Data = {
+			name: 'Test User 1',
+			username: 'testuser1',
+			email: 'test1@example.com',
+			password: 'password123',
+			bio: 'Test bio 1',
+		}
+
+		const user2Data = {
+			name: 'Test User 2',
+			username: 'testuser2',
+			email: 'test2@example.com',
+			password: 'password123',
+			bio: 'Test bio 2',
+		}
+
+		it('should successfully follow another user', async () => {
+			// Create two users
+			const user1Response = await request(app)
+				.post('/users')
+				.send(user1Data)
+				.expect(201)
+			const user2Response = await request(app)
+				.post('/users')
+				.send(user2Data)
+				.expect(201)
+
+			// Follow user
+			const response = await request(app)
+				.post(
+					`/users/${user1Response.body._id}/follow/${user2Response.body._id}`
+				)
+				.expect(200)
+
+			// Check response
+			expect(response.body.following).toHaveLength(1)
+			expect(response.body.following[0]._id.toString()).toBe(
+				user2Response.body._id
+			)
+
+			// Verify in database
+			const targetUser = await User.findById(user2Response.body._id)
+			expect(targetUser?.followers).toHaveLength(1)
+			expect(targetUser?.followers[0]._id.toString()).toBe(
+				user1Response.body._id
+			)
+		})
+
+		it('should return 400 when user tries to follow themselves', async () => {
+			const userResponse = await request(app)
+				.post('/users')
+				.send(user1Data)
+				.expect(201)
+
+			const response = await request(app)
+				.post(`/users/${userResponse.body._id}/follow/${userResponse.body._id}`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Users cannot follow themselves',
+			})
+		})
+
+		it('should return 400 when target user does not exist', async () => {
+			const userResponse = await request(app)
+				.post('/users')
+				.send(user1Data)
+				.expect(201)
+
+			const nonExistentId = '507f1f77bcf86cd799439011'
+
+			const response = await request(app)
+				.post(`/users/${userResponse.body._id}/follow/${nonExistentId}`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'User not found',
+			})
+		})
+
+		it('should return 400 when user tries to follow someone they already follow', async () => {
+			// Create two users
+			const user1Response = await request(app)
+				.post('/users')
+				.send(user1Data)
+				.expect(201)
+			const user2Response = await request(app)
+				.post('/users')
+				.send(user2Data)
+				.expect(201)
+
+			// First follow
+			await request(app)
+				.post(
+					`/users/${user1Response.body._id}/follow/${user2Response.body._id}`
+				)
+				.expect(200)
+
+			// Try to follow again
+			const response = await request(app)
+				.post(
+					`/users/${user1Response.body._id}/follow/${user2Response.body._id}`
+				)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Already following this user',
+			})
+		})
+
+		it('should return 400 if user ID is invalid', async () => {
+			const invalidId = 'invalid-id'
+			const userResponse = await request(app)
+				.post('/users')
+				.send(user1Data)
+				.expect(201)
+
+			const response = await request(app)
+				.post(`/users/${invalidId}/follow/${userResponse.body._id}`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Invalid ID format',
+			})
+		})
+	})
 })
