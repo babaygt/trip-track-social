@@ -95,4 +95,64 @@ describe('UserService', () => {
 			).rejects.toThrow('Invalid ID format')
 		})
 	})
+
+	// Update password tests
+
+	describe('updatePassword', () => {
+		const validUserData = {
+			name: 'Test User',
+			username: 'testuser',
+			email: 'test@example.com',
+			password: 'password123',
+			bio: 'Test bio',
+		}
+
+		it('should successfully update password with valid credentials', async () => {
+			const user = await userService.createUser(validUserData)
+			const updatedUser = await userService.updatePassword(
+				user.id,
+				'password123',
+				'newpassword123'
+			)
+
+			expect(updatedUser).toBeDefined()
+			// Verify new password works
+			const isValidNewPassword = await bcrypt.compare(
+				'newpassword123',
+				updatedUser.password
+			)
+			expect(isValidNewPassword).toBe(true)
+			// Verify old password doesn't work
+			const isValidOldPassword = await bcrypt.compare(
+				'password123',
+				updatedUser.password
+			)
+			expect(isValidOldPassword).toBe(false)
+		})
+
+		it('should throw error for incorrect old password', async () => {
+			const user = await userService.createUser(validUserData)
+			await expect(
+				userService.updatePassword(user.id, 'wrongpassword', 'newpassword123')
+			).rejects.toThrow('Invalid password')
+		})
+
+		it('should throw error for non-existent user', async () => {
+			const nonExistentId = '507f1f77bcf86cd799439011' // Valid MongoDB ObjectId format
+			await expect(
+				userService.updatePassword(
+					nonExistentId,
+					'password123',
+					'newpassword123'
+				)
+			).rejects.toThrow('User not found')
+		})
+
+		it('should throw error for invalid user ID format', async () => {
+			const invalidId = 'invalid-id'
+			await expect(
+				userService.updatePassword(invalidId, 'password123', 'newpassword123')
+			).rejects.toThrow('Invalid ID format')
+		})
+	})
 })

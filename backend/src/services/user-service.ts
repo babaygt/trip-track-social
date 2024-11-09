@@ -26,4 +26,25 @@ export class UserService extends BaseService<IUser> {
 		}
 		return bcrypt.compare(password, user.password)
 	}
+
+	async updatePassword(
+		userId: string,
+		oldPassword: string,
+		newPassword: string
+	): Promise<IUser> {
+		const user = await this.findById(userId)
+		if (!user) {
+			throw new Error('User not found')
+		}
+
+		const isValid = await bcrypt.compare(oldPassword, user.password)
+		if (!isValid) {
+			throw new Error('Invalid password')
+		}
+
+		const hashedPassword = await bcrypt.hash(newPassword, 10)
+		const updatedUser = await this.update(userId, { password: hashedPassword })
+		if (!updatedUser) throw new Error('Failed to update password')
+		return updatedUser
+	}
 }
