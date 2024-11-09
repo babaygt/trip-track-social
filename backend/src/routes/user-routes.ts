@@ -51,4 +51,22 @@ router.post(
 	}
 )
 
+// Unfollow user
+router.delete(
+	'/:userId/follow/:targetUserId',
+	async (req: Request, res: Response) => {
+		try {
+			const user = await userService.unfollowUser(
+				req.params.userId,
+				req.params.targetUserId
+			)
+			res.json(user)
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : 'An unknown error occurred'
+			res.status(400).json({ message: errorMessage })
+		}
+	}
+)
+
 export default router
