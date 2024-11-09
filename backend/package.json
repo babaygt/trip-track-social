@@ -21,11 +21,13 @@
 		"express": "^4.21.1",
 		"http-errors": "^2.0.0",
 		"mongoose": "^8.8.1",
+		"mongoose-autopopulate": "^1.1.0",
 		"morgan": "^1.10.0"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.14.0",
 		"@types/cookie-parser": "^1.4.7",
+		"@types/cors": "^2.8.17",
 		"@types/express": "^5.0.0",
 		"@types/http-errors": "^2.0.4",
 		"@types/morgan": "^1.9.9",

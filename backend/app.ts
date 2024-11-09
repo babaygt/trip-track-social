@@ -3,8 +3,9 @@ import dotenv from 'dotenv'
 import morgan from 'morgan'
 import cookieParser from 'cookie-parser'
 import path from 'path'
-
+import cors from 'cors'
 import { connectToDatabase } from './config/database-connection'
+import corsOptions from './config/cors-options'
 import indexRouter from './routes/index'
 
 dotenv.config()
@@ -16,7 +17,7 @@ connectToDatabase()
 app.use(express.json())
 app.use(cookieParser())
 app.use(morgan('dev'))
-
+app.use(cors(corsOptions))
 app.use('/', express.static(path.join(__dirname, 'public')))
 
 app.use('/', indexRouter)
