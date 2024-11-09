@@ -121,4 +121,14 @@ export class UserService extends BaseService<IUser> {
 		}
 		return this.findAll({ _id: { $in: user.followers } })
 	}
+
+	async getFollowing(userId: string): Promise<IUser[]> {
+		const user = await this.findById(userId)
+		if (!user) {
+			throw new Error('User not found')
+		}
+		const following = await this.findAll({ _id: { $in: user.following } })
+		if (!following) throw new Error('Failed to fetch following users')
+		return following!
+	}
 }

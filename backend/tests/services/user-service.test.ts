@@ -356,4 +356,60 @@ describe('UserService', () => {
 			)
 		})
 	})
+
+	// Get following tests
+	describe('getFollowing', () => {
+		const userData = {
+			name: 'John Doe',
+			username: 'johndoe',
+			email: 'john@example.com',
+			password: 'password123',
+			bio: 'Hello, I am John!',
+		}
+
+		it('should return users that the user is following', async () => {
+			const user1 = await userService.createUser(userData)
+			const user2 = await userService.createUser({
+				name: 'Jane Smith',
+				username: 'janesmith',
+				email: 'jane@example.com',
+				password: 'password123',
+				bio: 'Hello, I am Jane!',
+			})
+
+			// user1 follows user2
+			await userService.followUser(user1.id, user2.id)
+
+			const following = await userService.getFollowing(user1.id)
+
+			expect(following).toHaveLength(1)
+			expect(following[0].id).toBe(user2.id)
+			expect(following[0].username).toBe('janesmith')
+		})
+
+		it('should return an empty array if user is not following anyone', async () => {
+			const user = await userService.createUser(userData)
+
+			const following = await userService.getFollowing(user.id)
+
+			expect(following).toHaveLength(0)
+			expect(Array.isArray(following)).toBe(true)
+		})
+
+		it('should throw an error if user does not exist', async () => {
+			const nonExistentId = '507f1f77bcf86cd799439011'
+
+			await expect(userService.getFollowing(nonExistentId)).rejects.toThrow(
+				'User not found'
+			)
+		})
+
+		it('should throw an error for invalid user ID format', async () => {
+			const invalidId = 'invalid-id'
+
+			await expect(userService.getFollowing(invalidId)).rejects.toThrow(
+				'Invalid ID format'
+			)
+		})
+	})
 })
