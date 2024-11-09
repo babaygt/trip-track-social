@@ -70,6 +70,7 @@ const UserSchema = new Schema<IUser>(
 				ref: 'User',
 				autopopulate: {
 					select: 'username profilePicture name',
+					maxDepth: 1,
 				},
 			},
 		],
@@ -79,6 +80,7 @@ const UserSchema = new Schema<IUser>(
 				ref: 'User',
 				autopopulate: {
 					select: 'username profilePicture name',
+					maxDepth: 1,
 				},
 			},
 		],
