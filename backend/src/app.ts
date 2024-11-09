@@ -7,6 +7,7 @@ import cors from 'cors'
 import { connectToDatabase } from './config/database-connection'
 import corsOptions from './config/cors-options'
 import indexRouter from './routes/index'
+import userRouter from './routes/user-routes'
 
 dotenv.config()
 
@@ -21,6 +22,7 @@ app.use(cors(corsOptions))
 app.use('/', express.static(path.join(__dirname, 'public')))
 
 app.use('/', indexRouter)
+app.use('/users', userRouter)
 
 app.all('*', (req, res) => {
 	res.status(404)
