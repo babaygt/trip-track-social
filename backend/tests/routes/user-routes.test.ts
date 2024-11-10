@@ -2,6 +2,9 @@ import request from 'supertest'
 import app from '../../src/app'
 import { User } from '../../src/models'
 import { UserService } from '../../src/services/user-service'
+import { RouteService } from '../../src/services/route-service'
+import { Types } from 'mongoose'
+import { TravelMode } from '../../src/models/route'
 
 describe('User Routes', () => {
 	// Create user tests
@@ -646,6 +649,107 @@ describe('User Routes', () => {
 			const invalidId = 'invalid-id'
 
 			const response = await request(app).get(`/users/${invalidId}`).expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Invalid ID format',
+			})
+		})
+	})
+
+	describe('POST /users/:userId/bookmarks/:routeId', () => {
+		const userData = {
+			name: 'Test User',
+			username: 'testuser',
+			email: 'test@example.com',
+			password: 'password123',
+			bio: 'Test bio',
+		}
+
+		let routeId: string
+		let routeService: RouteService
+
+		beforeEach(async () => {
+			routeService = new RouteService()
+			const route = await routeService.createRoute({
+				title: 'Test Route',
+				creator: new Types.ObjectId(),
+				startPoint: { lat: 0, lng: 0 },
+				endPoint: { lat: 1, lng: 1 },
+				travelMode: 'DRIVING' as TravelMode,
+				description: 'Test description',
+				totalDistance: 100,
+				totalTime: 3600,
+			})
+			routeId = (route._id as Types.ObjectId).toString()
+		})
+
+		it('should successfully bookmark a route', async () => {
+			// Create a user first
+			const createResponse = await request(app)
+				.post('/users')
+				.send(userData)
+				.expect(201)
+
+			const userId = createResponse.body._id
+
+			// Bookmark the route
+			const response = await request(app)
+				.post(`/users/${userId}/bookmarks/${routeId}`)
+				.expect(200)
+
+			expect(response.body.bookmarks).toHaveLength(1)
+			expect(response.body.bookmarks[0]._id.toString()).toBe(routeId)
+		})
+
+		it('should return 400 when trying to bookmark the same route twice', async () => {
+			// Create a user first
+			const createResponse = await request(app)
+				.post('/users')
+				.send(userData)
+				.expect(201)
+
+			const userId = createResponse.body._id
+
+			// First bookmark
+			await request(app)
+				.post(`/users/${userId}/bookmarks/${routeId}`)
+				.expect(200)
+
+			// Try to bookmark again
+			const response = await request(app)
+				.post(`/users/${userId}/bookmarks/${routeId}`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Route already bookmarked',
+			})
+		})
+
+		it('should return 400 when user does not exist', async () => {
+			const nonExistentId = '507f1f77bcf86cd799439011'
+
+			const response = await request(app)
+				.post(`/users/${nonExistentId}/bookmarks/${routeId}`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'User not found',
+			})
+		})
+
+		it('should return 400 for invalid route ID format', async () => {
+			// Create a user first
+			const createResponse = await request(app)
+				.post('/users')
+				.send(userData)
+				.expect(201)
+
+			const userId = createResponse.body._id
+			const invalidRouteId = 'invalid-id'
+
+			const response = await request(app)
+				.post(`/users/${userId}/bookmarks/${invalidRouteId}`)
+				.expect(400)
 
 			expect(response.body).toEqual({
 				message: 'Invalid ID format',
