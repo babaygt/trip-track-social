@@ -1,6 +1,7 @@
 import { BaseService } from './base-service'
 import { IUser, User } from '../models'
 import bcrypt from 'bcrypt'
+import { Types } from 'mongoose'
 
 export class UserService extends BaseService<IUser> {
 	constructor() {
@@ -130,5 +131,30 @@ export class UserService extends BaseService<IUser> {
 		const following = await this.findAll({ _id: { $in: user.following } })
 		if (!following) throw new Error('Failed to fetch following users')
 		return following!
+	}
+
+	async bookmarkRoute(userId: string, routeId: string): Promise<IUser> {
+		if (!Types.ObjectId.isValid(routeId)) {
+			throw new Error('Invalid ID format')
+		}
+
+		const user = await this.findById(userId)
+		if (!user) {
+			throw new Error('User not found')
+		}
+
+		const isBookmarked = user.bookmarks.some(
+			(bookmark) => bookmark._id.toString() === routeId
+		)
+
+		if (isBookmarked) {
+			throw new Error('Route already bookmarked')
+		}
+
+		const updatedUser = await this.update(userId, {
+			$push: { bookmarks: routeId },
+		})
+		if (!updatedUser) throw new Error('Failed to bookmark route')
+		return updatedUser
 	}
 }

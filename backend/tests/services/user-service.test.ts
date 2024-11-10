@@ -1,5 +1,8 @@
 import { UserService } from '../../src/services/user-service'
 import bcrypt from 'bcrypt'
+import { RouteService } from '../../src/services/route-service'
+import { Types } from 'mongoose'
+import { TravelMode } from '../../src/models'
 
 describe('UserService', () => {
 	let userService: UserService
@@ -410,6 +413,72 @@ describe('UserService', () => {
 			await expect(userService.getFollowing(invalidId)).rejects.toThrow(
 				'Invalid ID format'
 			)
+		})
+	})
+
+	describe('bookmarkRoute', () => {
+		const userData = {
+			name: 'Test User',
+			username: 'testuser',
+			email: 'test@example.com',
+			password: 'password123',
+			bio: 'Test bio',
+		}
+
+		let routeId: string
+		let routeService: RouteService
+
+		beforeEach(async () => {
+			routeService = new RouteService()
+			const route = await routeService.createRoute({
+				title: 'Test Route',
+				creator: new Types.ObjectId(),
+				startPoint: { lat: 0, lng: 0 },
+				endPoint: { lat: 1, lng: 1 },
+				travelMode: 'DRIVING' as TravelMode,
+				description: 'Test description',
+				totalDistance: 100,
+				totalTime: 3600,
+			})
+			routeId = (route._id as Types.ObjectId).toString()
+		})
+
+		it('should successfully bookmark a route', async () => {
+			const user = await userService.createUser(userData)
+
+			const updatedUser = await userService.bookmarkRoute(user.id, routeId)
+
+			expect(updatedUser.bookmarks).toHaveLength(1)
+			expect(updatedUser.bookmarks[0]._id.toString()).toEqual(routeId)
+		})
+
+		it('should throw error when user tries to bookmark the same route twice', async () => {
+			const user = await userService.createUser(userData)
+
+			// First bookmark
+			await userService.bookmarkRoute(user.id, routeId)
+
+			// Try to bookmark again
+			await expect(userService.bookmarkRoute(user.id, routeId)).rejects.toThrow(
+				'Route already bookmarked'
+			)
+		})
+
+		it('should throw error when user does not exist', async () => {
+			const nonExistentId = '507f1f77bcf86cd799439011'
+
+			await expect(
+				userService.bookmarkRoute(nonExistentId, routeId)
+			).rejects.toThrow('User not found')
+		})
+
+		it('should throw error for invalid route ID format', async () => {
+			const user = await userService.createUser(userData)
+			const invalidId = 'invalid-id'
+
+			await expect(
+				userService.bookmarkRoute(user.id, invalidId)
+			).rejects.toThrow('Invalid ID format')
 		})
 	})
 })
