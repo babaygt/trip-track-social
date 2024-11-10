@@ -126,4 +126,22 @@ router.post(
 	}
 )
 
+// Remove bookmark
+router.delete(
+	'/:userId/bookmarks/:routeId',
+	async (req: Request, res: Response) => {
+		try {
+			const user = await userService.removeBookmark(
+				req.params.userId,
+				req.params.routeId
+			)
+			res.json(user)
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : 'An unknown error occurred'
+			res.status(400).json({ message: errorMessage })
+		}
+	}
+)
+
 export default router

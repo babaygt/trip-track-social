@@ -756,4 +756,103 @@ describe('User Routes', () => {
 			})
 		})
 	})
+
+	describe('DELETE /users/:userId/bookmarks/:routeId', () => {
+		const userData = {
+			name: 'Test User',
+			username: 'testuser',
+			email: 'test@example.com',
+			password: 'password123',
+			bio: 'Test bio',
+		}
+
+		let routeId: string
+		let routeService: RouteService
+
+		beforeEach(async () => {
+			routeService = new RouteService()
+			const route = await routeService.createRoute({
+				title: 'Test Route',
+				creator: new Types.ObjectId(),
+				startPoint: { lat: 0, lng: 0 },
+				endPoint: { lat: 1, lng: 1 },
+				travelMode: 'DRIVING' as TravelMode,
+				description: 'Test description',
+				totalDistance: 100,
+				totalTime: 3600,
+			})
+			routeId = (route._id as Types.ObjectId).toString()
+		})
+
+		it('should successfully remove a bookmark', async () => {
+			// Create a user first
+			const createResponse = await request(app)
+				.post('/users')
+				.send(userData)
+				.expect(201)
+
+			const userId = createResponse.body._id
+
+			// First bookmark the route
+			await request(app)
+				.post(`/users/${userId}/bookmarks/${routeId}`)
+				.expect(200)
+
+			// Then remove the bookmark
+			const response = await request(app)
+				.delete(`/users/${userId}/bookmarks/${routeId}`)
+				.expect(200)
+
+			expect(response.body.bookmarks).toHaveLength(0)
+		})
+
+		it('should return 400 when route is not bookmarked', async () => {
+			// Create a user first
+			const createResponse = await request(app)
+				.post('/users')
+				.send(userData)
+				.expect(201)
+
+			const userId = createResponse.body._id
+
+			const response = await request(app)
+				.delete(`/users/${userId}/bookmarks/${routeId}`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Route not bookmarked',
+			})
+		})
+
+		it('should return 400 when user does not exist', async () => {
+			const nonExistentId = '507f1f77bcf86cd799439011'
+
+			const response = await request(app)
+				.delete(`/users/${nonExistentId}/bookmarks/${routeId}`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'User not found',
+			})
+		})
+
+		it('should return 400 for invalid route ID format', async () => {
+			// Create a user first
+			const createResponse = await request(app)
+				.post('/users')
+				.send(userData)
+				.expect(201)
+
+			const userId = createResponse.body._id
+			const invalidRouteId = 'invalid-id'
+
+			const response = await request(app)
+				.delete(`/users/${userId}/bookmarks/${invalidRouteId}`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Invalid ID format',
+			})
+		})
+	})
 })
