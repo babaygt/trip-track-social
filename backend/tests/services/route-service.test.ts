@@ -205,4 +205,52 @@ describe('RouteService', () => {
 			).rejects.toThrow('Route not found')
 		})
 	})
+
+	describe('addComment', () => {
+		let routeId: string
+
+		beforeEach(async () => {
+			// Create a test route first
+			const route = await routeService.createRoute({
+				title: 'Test Route',
+				creator: userId,
+				startPoint: { lat: 0, lng: 0 },
+				endPoint: { lat: 1, lng: 1 },
+				travelMode: 'DRIVING' as TravelMode,
+				description: 'Test description',
+				totalDistance: 100,
+				totalTime: 3600,
+			})
+			routeId = route._id as string
+		})
+
+		it('should successfully add a comment to a route', async () => {
+			const commentContent = 'This is a test comment'
+			const updatedRoute = await routeService.addComment(
+				routeId,
+				userId.toString(),
+				commentContent
+			)
+
+			expect(updatedRoute).toBeDefined()
+			expect(updatedRoute.comments).toHaveLength(1)
+			expect(updatedRoute.comments[0].content).toBe(commentContent)
+			expect(updatedRoute.comments[0].user._id.toString()).toBe(
+				userId.toString()
+			)
+		})
+
+		it('should throw an error when trying to add a comment to a non-existent route', async () => {
+			const nonExistentRouteId = new Types.ObjectId().toString()
+			const commentContent = 'This comment should not be added'
+
+			await expect(
+				routeService.addComment(
+					nonExistentRouteId,
+					userId.toString(),
+					commentContent
+				)
+			).rejects.toThrow('Route not found')
+		})
+	})
 })

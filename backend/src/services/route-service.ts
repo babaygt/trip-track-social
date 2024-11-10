@@ -1,5 +1,6 @@
 import { BaseService } from './base-service'
 import { IRoute, Route } from '../models'
+import { Types } from 'mongoose'
 
 export class RouteService extends BaseService<IRoute> {
 	constructor() {
@@ -43,6 +44,30 @@ export class RouteService extends BaseService<IRoute> {
 		})
 
 		if (!updatedRoute) throw new Error('Failed to unlike route')
+		return updatedRoute
+	}
+
+	async addComment(
+		routeId: string,
+		userId: string,
+		content: string
+	): Promise<IRoute> {
+		const route = await this.findById(routeId)
+		if (!route) {
+			throw new Error('Route not found')
+		}
+
+		const comment = {
+			user: new Types.ObjectId(userId),
+			content,
+			createdAt: new Date(),
+		}
+
+		const updatedRoute = await this.update(routeId, {
+			$push: { comments: comment },
+		})
+
+		if (!updatedRoute) throw new Error('Failed to add comment')
 		return updatedRoute
 	}
 }
