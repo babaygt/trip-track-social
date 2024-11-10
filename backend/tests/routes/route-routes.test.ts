@@ -107,4 +107,91 @@ describe('Route Routes', () => {
 			await User.deleteMany({})
 		})
 	})
+
+	describe('POST /routes/:routeId/like/:userId', () => {
+		let routeId: string
+		let userId: Types.ObjectId
+
+		beforeEach(async () => {
+			// Create a test user
+			const user = await User.create({
+				name: 'Test User',
+				username: 'testuser',
+				email: 'test@example.com',
+				password: 'password123',
+				bio: 'Test bio',
+			})
+			userId = user._id as Types.ObjectId
+
+			// Create a test route
+			const route = await Route.create({
+				title: 'Test Route',
+				creator: new Types.ObjectId(),
+				startPoint: { lat: 0, lng: 0 },
+				endPoint: { lat: 1, lng: 1 },
+				travelMode: 'DRIVING' as TravelMode,
+				description: 'Test description',
+				totalDistance: 100,
+				totalTime: 3600,
+			})
+			routeId = (route._id as Types.ObjectId).toString()
+		})
+
+		it('should successfully like a route', async () => {
+			const response = await request(app)
+				.post(`/routes/${routeId}/like/${userId}`)
+				.expect(200)
+
+			expect(response.body.likes).toHaveLength(1)
+			expect(response.body.likes[0]._id.toString()).toBe(userId.toString())
+
+			// Verify in database
+			const route = await Route.findById(routeId)
+			expect(route?.likes).toHaveLength(1)
+			expect(route?.likes[0]._id.toString()).toBe(userId.toString())
+		})
+
+		it('should return 400 when trying to like the same route twice', async () => {
+			// First like
+			await request(app).post(`/routes/${routeId}/like/${userId}`).expect(200)
+
+			// Try to like again
+			const response = await request(app)
+				.post(`/routes/${routeId}/like/${userId}`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Route already liked',
+			})
+		})
+
+		it('should return 400 when route does not exist', async () => {
+			const nonExistentRouteId = new Types.ObjectId().toString()
+
+			const response = await request(app)
+				.post(`/routes/${nonExistentRouteId}/like/${userId}`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Route not found',
+			})
+		})
+
+		it('should return 400 for invalid route ID format', async () => {
+			const invalidRouteId = 'invalid-id'
+
+			const response = await request(app)
+				.post(`/routes/${invalidRouteId}/like/${userId}`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Invalid ID format',
+			})
+		})
+
+		afterEach(async () => {
+			await Route.deleteMany({})
+			await User.deleteMany({})
+		})
+	})
 })
