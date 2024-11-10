@@ -70,4 +70,31 @@ export class RouteService extends BaseService<IRoute> {
 		if (!updatedRoute) throw new Error('Failed to add comment')
 		return updatedRoute
 	}
+
+	async removeComment(
+		routeId: string,
+		commentId: string,
+		userId: string
+	): Promise<IRoute> {
+		const route = await this.findById(routeId)
+		if (!route) {
+			throw new Error('Route not found')
+		}
+
+		const comment = route.comments.find((c) => c._id?.toString() === commentId)
+		if (!comment) {
+			throw new Error('Comment not found')
+		}
+
+		if (!comment.isOwner(userId)) {
+			throw new Error('Not authorized to remove this comment')
+		}
+
+		const updatedRoute = await this.update(routeId, {
+			$pull: { comments: { _id: new Types.ObjectId(commentId) } },
+		})
+
+		if (!updatedRoute) throw new Error('Failed to remove comment')
+		return updatedRoute
+	}
 }

@@ -253,4 +253,64 @@ describe('RouteService', () => {
 			).rejects.toThrow('Route not found')
 		})
 	})
+
+	describe('removeComment', () => {
+		let routeId: string
+		let commentId: string
+
+		beforeEach(async () => {
+			// Create a test route first
+			const route = await routeService.createRoute({
+				title: 'Test Route',
+				creator: userId,
+				startPoint: { lat: 0, lng: 0 },
+				endPoint: { lat: 1, lng: 1 },
+				travelMode: 'DRIVING' as TravelMode,
+				description: 'Test description',
+				totalDistance: 100,
+				totalTime: 3600,
+			})
+			routeId = route._id as string
+
+			// Add a comment to the route
+			const updatedRoute = (await routeService.addComment(
+				routeId,
+				userId.toString(),
+				'This is a test comment'
+			)) as { comments: { _id: Types.ObjectId }[] }
+			commentId = updatedRoute.comments[0]._id.toString()
+		})
+
+		it('should successfully remove a comment from a route', async () => {
+			const updatedRoute = await routeService.removeComment(
+				routeId,
+				commentId,
+				userId.toString()
+			)
+
+			expect(updatedRoute).toBeDefined()
+			expect(updatedRoute.comments).toHaveLength(0)
+		})
+
+		it('should throw an error when trying to remove a non-existent comment', async () => {
+			const nonExistentCommentId = new Types.ObjectId().toString()
+
+			await expect(
+				routeService.removeComment(
+					routeId,
+					nonExistentCommentId,
+					userId.toString()
+				)
+			).rejects.toThrow('Comment not found')
+		})
+
+		it('should throw an error when user is not authorized to remove the comment', async () => {
+			// Create a new user
+			const anotherUserId = new Types.ObjectId().toString()
+
+			await expect(
+				routeService.removeComment(routeId, commentId, anotherUserId)
+			).rejects.toThrow('Not authorized to remove this comment')
+		})
+	})
 })
