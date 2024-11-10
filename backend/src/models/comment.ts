@@ -5,6 +5,7 @@ export interface IComment {
 	user: Types.ObjectId
 	content: string
 	createdAt: Date
+	isOwner: (userId: string) => boolean
 }
 
 export const CommentSchema = new Schema<IComment>({
@@ -28,7 +29,7 @@ export const CommentSchema = new Schema<IComment>({
 	},
 })
 
-// Add any comment-specific methods here if needed
+// Methods
 CommentSchema.methods.isOwner = function (userId: string): boolean {
 	return this.user.toString() === userId.toString()
 }
