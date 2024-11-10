@@ -1,7 +1,7 @@
-import { Schema, Types } from 'mongoose'
+import { Schema, Types, Document } from 'mongoose'
 import autopopulate from 'mongoose-autopopulate'
 
-export interface IComment {
+export interface IComment extends Document {
 	user: Types.ObjectId
 	content: string
 	createdAt: Date
@@ -31,7 +31,7 @@ export const CommentSchema = new Schema<IComment>({
 
 // Methods
 CommentSchema.methods.isOwner = function (userId: string): boolean {
-	return this.user.toString() === userId.toString()
+	return this.user._id.toString() === userId.toString()
 }
 
 // Plugin
