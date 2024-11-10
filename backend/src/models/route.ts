@@ -132,9 +132,12 @@ RouteSchema.methods.isOwner = function (userId: string): boolean {
 }
 
 RouteSchema.methods.isLikedBy = function (userId: string): boolean {
-	return this.likes.some(
-		(id: Types.ObjectId) => id.toString() === userId.toString()
-	)
+	return this.likes.some((like: Types.ObjectId) => {
+		if (typeof like === 'object' && like._id) {
+			return like._id.toString() === userId.toString()
+		}
+		return like.toString() === userId.toString()
+	})
 }
 
 // Plugin
