@@ -388,4 +388,90 @@ describe('RouteService', () => {
 			)
 		})
 	})
+
+	describe('searchRoutes', () => {
+		beforeEach(async () => {
+			// Create some test routes
+			await routeService.createRoute({
+				title: 'Test Route 1',
+				creator: userId,
+				startPoint: { lat: 0, lng: 0 },
+				endPoint: { lat: 1, lng: 1 },
+				travelMode: 'DRIVING' as TravelMode,
+				description: 'A scenic route',
+				totalDistance: 100,
+				totalTime: 3600,
+				tags: ['scenic', 'nature'],
+			})
+
+			await routeService.createRoute({
+				title: 'Test Route 2',
+				creator: userId,
+				startPoint: { lat: 2, lng: 2 },
+				endPoint: { lat: 3, lng: 3 },
+				travelMode: 'WALKING' as TravelMode,
+				description: 'A city route',
+				totalDistance: 200,
+				totalTime: 7200,
+				tags: ['city', 'urban'],
+			})
+		})
+
+		it('should return routes matching the title', async () => {
+			const routes = await routeService.searchRoutes('Test Route 1')
+
+			expect(routes).toBeDefined()
+			expect(routes.data).toHaveLength(1)
+			expect(routes.data[0].title).toBe('Test Route 1')
+		})
+
+		it('should return routes matching the description', async () => {
+			const routes = await routeService.searchRoutes('scenic')
+
+			expect(routes).toBeDefined()
+			expect(routes.data).toHaveLength(1)
+			expect(routes.data[0].description).toContain('scenic')
+		})
+
+		it('should return routes matching the tags', async () => {
+			const routes = await routeService.searchRoutes('urban')
+
+			expect(routes).toBeDefined()
+			expect(routes.data).toHaveLength(1)
+			expect(routes.data[0].tags).toContain('urban')
+		})
+
+		it('should return an empty array if no routes match', async () => {
+			const routes = await routeService.searchRoutes('nonexistent')
+
+			expect(routes).toBeDefined()
+			expect(routes.data).toHaveLength(0)
+		})
+
+		it('should paginate results', async () => {
+			// Create additional routes for pagination
+			await routeService.createRoute({
+				title: 'Another Test Route',
+				creator: userId,
+				startPoint: { lat: 4, lng: 4 },
+				endPoint: { lat: 5, lng: 5 },
+				travelMode: 'BICYCLING' as TravelMode,
+				description: 'Another scenic route',
+				totalDistance: 300,
+				totalTime: 10800,
+				tags: ['scenic', 'long'],
+			})
+
+			const routesPage1 = await routeService.searchRoutes('Test', 1, 1)
+			const routesPage2 = await routeService.searchRoutes('Test', 2, 1)
+
+			expect(routesPage1.data).toHaveLength(1)
+			expect(routesPage2.data).toHaveLength(1)
+			expect(
+				(routesPage1.data as { _id: Types.ObjectId }[])[0]._id.toString()
+			).not.toBe(
+				(routesPage2.data as { _id: Types.ObjectId }[])[0]._id.toString()
+			)
+		})
+	})
 })

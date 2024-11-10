@@ -103,4 +103,20 @@ export class RouteService extends BaseService<IRoute> {
 			sort: { createdAt: -1 },
 		})
 	}
+
+	async searchRoutes(query: string, page: number = 1, limit: number = 10) {
+		const searchRegex = new RegExp(query, 'i')
+		return this.findWithPagination(
+			{
+				$or: [
+					{ title: searchRegex },
+					{ description: searchRegex },
+					{ tags: searchRegex },
+				],
+			},
+			page,
+			limit,
+			{ sort: { createdAt: -1 } }
+		)
+	}
 }
