@@ -157,4 +157,29 @@ export class UserService extends BaseService<IUser> {
 		if (!updatedUser) throw new Error('Failed to bookmark route')
 		return updatedUser
 	}
+
+	async removeBookmark(userId: string, routeId: string): Promise<IUser> {
+		if (!Types.ObjectId.isValid(routeId)) {
+			throw new Error('Invalid ID format')
+		}
+
+		const user = await this.findById(userId)
+		if (!user) {
+			throw new Error('User not found')
+		}
+
+		const isBookmarked = user.bookmarks.some(
+			(bookmark) => bookmark._id.toString() === routeId
+		)
+
+		if (!isBookmarked) {
+			throw new Error('Route not bookmarked')
+		}
+
+		const updatedUser = await this.update(userId, {
+			$pull: { bookmarks: routeId },
+		})
+		if (!updatedUser) throw new Error('Failed to remove bookmark')
+		return updatedUser
+	}
 }

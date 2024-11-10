@@ -481,4 +481,68 @@ describe('UserService', () => {
 			).rejects.toThrow('Invalid ID format')
 		})
 	})
+
+	describe('removeBookmark', () => {
+		const userData = {
+			name: 'Test User',
+			username: 'testuser',
+			email: 'test@example.com',
+			password: 'password123',
+			bio: 'Test bio',
+		}
+
+		let routeId: string
+		let routeService: RouteService
+
+		beforeEach(async () => {
+			routeService = new RouteService()
+			const route = await routeService.createRoute({
+				title: 'Test Route',
+				creator: new Types.ObjectId(),
+				startPoint: { lat: 0, lng: 0 },
+				endPoint: { lat: 1, lng: 1 },
+				travelMode: 'DRIVING' as TravelMode,
+				description: 'Test description',
+				totalDistance: 100,
+				totalTime: 3600,
+			})
+			routeId = (route._id as Types.ObjectId).toString()
+		})
+
+		it('should successfully remove a bookmark', async () => {
+			const user = await userService.createUser(userData)
+			// First bookmark the route
+			await userService.bookmarkRoute(user.id, routeId)
+
+			// Then remove the bookmark
+			const updatedUser = await userService.removeBookmark(user.id, routeId)
+
+			expect(updatedUser.bookmarks).toHaveLength(0)
+		})
+
+		it('should throw error when route is not bookmarked', async () => {
+			const user = await userService.createUser(userData)
+
+			await expect(
+				userService.removeBookmark(user.id, routeId)
+			).rejects.toThrow('Route not bookmarked')
+		})
+
+		it('should throw error when user does not exist', async () => {
+			const nonExistentId = '507f1f77bcf86cd799439011'
+
+			await expect(
+				userService.removeBookmark(nonExistentId, routeId)
+			).rejects.toThrow('User not found')
+		})
+
+		it('should throw error for invalid route ID format', async () => {
+			const user = await userService.createUser(userData)
+			const invalidId = 'invalid-id'
+
+			await expect(
+				userService.removeBookmark(user.id, invalidId)
+			).rejects.toThrow('Invalid ID format')
+		})
+	})
 })
