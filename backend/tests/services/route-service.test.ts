@@ -474,4 +474,72 @@ describe('RouteService', () => {
 			)
 		})
 	})
+
+	describe('getNearbyRoutes', () => {
+		beforeEach(async () => {
+			// Create some test routes
+			await routeService.createRoute({
+				title: 'Nearby Route 1',
+				creator: userId,
+				startPoint: { lat: 0, lng: 0 },
+				endPoint: { lat: 1, lng: 1 },
+				travelMode: 'DRIVING' as TravelMode,
+				description: 'A nearby route',
+				totalDistance: 100,
+				totalTime: 3600,
+			})
+
+			await routeService.createRoute({
+				title: 'Far Route',
+				creator: userId,
+				startPoint: { lat: 50, lng: 50 },
+				endPoint: { lat: 51, lng: 51 },
+				travelMode: 'WALKING' as TravelMode,
+				description: 'A far route',
+				totalDistance: 200,
+				totalTime: 7200,
+			})
+		})
+
+		it('should return routes within the specified radius', async () => {
+			const routes = await routeService.getNearbyRoutes(0, 0, 10)
+
+			expect(routes).toBeDefined()
+			expect(routes.data).toHaveLength(1)
+			expect(routes.data[0].title).toBe('Nearby Route 1')
+		})
+
+		it('should return an empty array if no routes are within the specified radius', async () => {
+			// Search at a valid location far from any existing routes
+			const routes = await routeService.getNearbyRoutes(89, 180, 1)
+
+			expect(routes).toBeDefined()
+			expect(routes.data).toHaveLength(0)
+		})
+
+		it('should paginate results', async () => {
+			// Create additional nearby routes for pagination
+			await routeService.createRoute({
+				title: 'Nearby Route 2',
+				creator: userId,
+				startPoint: { lat: 0.05, lng: 0.05 }, // Within ~7 km of (0,0)
+				endPoint: { lat: 1.05, lng: 1.05 },
+				travelMode: 'BICYCLING' as TravelMode,
+				description: 'Another nearby route',
+				totalDistance: 150,
+				totalTime: 5400,
+			})
+
+			const routesPage1 = await routeService.getNearbyRoutes(0, 0, 10, 1, 1)
+			const routesPage2 = await routeService.getNearbyRoutes(0, 0, 10, 2, 1)
+
+			expect(routesPage1.data).toHaveLength(1)
+			expect(routesPage2.data).toHaveLength(1)
+			expect(
+				(routesPage1.data as { _id: Types.ObjectId }[])[0]._id.toString()
+			).not.toBe(
+				(routesPage2.data as { _id: Types.ObjectId }[])[0]._id.toString()
+			)
+		})
+	})
 })

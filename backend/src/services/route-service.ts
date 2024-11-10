@@ -119,4 +119,37 @@ export class RouteService extends BaseService<IRoute> {
 			{ sort: { createdAt: -1 } }
 		)
 	}
+
+	async getNearbyRoutes(
+		lat: number,
+		lng: number,
+		radiusKm: number = 10,
+		page: number = 1,
+		limit: number = 10
+	) {
+		const earthRadiusKm = 6371
+		return this.findWithPagination(
+			{
+				$or: [
+					{
+						startPoint: {
+							$geoWithin: {
+								$centerSphere: [[lng, lat], radiusKm / earthRadiusKm],
+							},
+						},
+					},
+					{
+						endPoint: {
+							$geoWithin: {
+								$centerSphere: [[lng, lat], radiusKm / earthRadiusKm],
+							},
+						},
+					},
+				],
+			},
+			page,
+			limit,
+			{ sort: { createdAt: -1 } }
+		)
+	}
 }
