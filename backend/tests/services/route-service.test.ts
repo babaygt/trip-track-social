@@ -313,4 +313,79 @@ describe('RouteService', () => {
 			).rejects.toThrow('Not authorized to remove this comment')
 		})
 	})
+
+	describe('getRoutesByUser', () => {
+		let routeId: string
+
+		beforeEach(async () => {
+			// Create a test route
+			const route = await routeService.createRoute({
+				title: 'Test Route',
+				creator: userId,
+				startPoint: { lat: 0, lng: 0 },
+				endPoint: { lat: 1, lng: 1 },
+				travelMode: 'DRIVING' as TravelMode,
+				description: 'Test description',
+				totalDistance: 100,
+				totalTime: 3600,
+			})
+			routeId = route._id as string
+		})
+
+		it('should return routes for a given user', async () => {
+			const routes = await routeService.getRoutesByUser(userId.toString())
+
+			expect(routes).toBeDefined()
+			expect((routes.data as { _id: Types.ObjectId }[]).length).toBe(1)
+			expect((routes.data as { _id: Types.ObjectId }[])[0]._id.toString()).toBe(
+				routeId.toString()
+			)
+			expect(
+				(
+					routes.data as { creator: { _id: Types.ObjectId } }[]
+				)[0].creator._id.toString()
+			).toBe(userId.toString())
+		})
+
+		it('should return an empty array if user has no routes', async () => {
+			const anotherUserId = new Types.ObjectId().toString()
+			const routes = await routeService.getRoutesByUser(anotherUserId)
+
+			expect(routes).toBeDefined()
+			expect(routes.data).toHaveLength(0)
+		})
+
+		it('should paginate results', async () => {
+			// Create additional routes for pagination
+			await routeService.createRoute({
+				title: 'Another Test Route',
+				creator: userId,
+				startPoint: { lat: 2, lng: 2 },
+				endPoint: { lat: 3, lng: 3 },
+				travelMode: 'WALKING' as TravelMode,
+				description: 'Another test description',
+				totalDistance: 200,
+				totalTime: 7200,
+			})
+
+			const routesPage1 = await routeService.getRoutesByUser(
+				userId.toString(),
+				1,
+				1
+			)
+			const routesPage2 = await routeService.getRoutesByUser(
+				userId.toString(),
+				2,
+				1
+			)
+
+			expect(routesPage1.data).toHaveLength(1)
+			expect(routesPage2.data).toHaveLength(1)
+			expect(
+				(routesPage1.data as { _id: Types.ObjectId }[])[0]._id.toString()
+			).not.toBe(
+				(routesPage2.data as { _id: Types.ObjectId }[])[0]._id.toString()
+			)
+		})
+	})
 })

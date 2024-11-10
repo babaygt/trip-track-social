@@ -97,4 +97,10 @@ export class RouteService extends BaseService<IRoute> {
 		if (!updatedRoute) throw new Error('Failed to remove comment')
 		return updatedRoute
 	}
+
+	async getRoutesByUser(userId: string, page: number = 1, limit: number = 10) {
+		return this.findWithPagination({ creator: userId }, page, limit, {
+			sort: { createdAt: -1 },
+		})
+	}
 }
