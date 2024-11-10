@@ -7,6 +7,7 @@ import cors from 'cors'
 import corsOptions from './config/cors-options'
 import indexRouter from './routes/index'
 import userRouter from './routes/user-routes'
+import routeRoutes from './routes/route-routes'
 
 dotenv.config()
 
@@ -20,6 +21,7 @@ app.use('/', express.static(path.join(__dirname, 'public')))
 
 app.use('/', indexRouter)
 app.use('/users', userRouter)
+app.use('/routes', routeRoutes)
 
 app.all('*', (req, res) => {
 	res.status(404)
