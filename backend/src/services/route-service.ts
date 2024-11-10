@@ -21,10 +21,28 @@ export class RouteService extends BaseService<IRoute> {
 		}
 
 		const updatedRoute = await this.update(routeId, {
-			$addToSet: { likes: userId },
+			$push: { likes: userId },
 		})
 
 		if (!updatedRoute) throw new Error('Failed to like route')
+		return updatedRoute
+	}
+
+	async unlikeRoute(routeId: string, userId: string): Promise<IRoute> {
+		const route = await this.findById(routeId)
+		if (!route) {
+			throw new Error('Route not found')
+		}
+
+		if (!route.isLikedBy(userId)) {
+			throw new Error('Route not liked')
+		}
+
+		const updatedRoute = await this.update(routeId, {
+			$pull: { likes: userId },
+		})
+
+		if (!updatedRoute) throw new Error('Failed to unlike route')
 		return updatedRoute
 	}
 }

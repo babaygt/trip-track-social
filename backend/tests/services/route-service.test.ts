@@ -156,4 +156,53 @@ describe('RouteService', () => {
 			).rejects.toThrow('Route not found')
 		})
 	})
+
+	describe('unlikeRoute', () => {
+		let routeId: string
+
+		beforeEach(async () => {
+			// Create a test route first
+			const route = await routeService.createRoute({
+				title: 'Test Route',
+				creator: userId,
+				startPoint: { lat: 0, lng: 0 },
+				endPoint: { lat: 1, lng: 1 },
+				travelMode: 'DRIVING' as TravelMode,
+				description: 'Test description',
+				totalDistance: 100,
+				totalTime: 3600,
+			})
+			routeId = route._id as string
+
+			// Like the route first to set up for unliking
+			await routeService.likeRoute(routeId, userId.toString())
+		})
+
+		it('should successfully unlike a route', async () => {
+			const unlikedRoute = await routeService.unlikeRoute(
+				routeId,
+				userId.toString()
+			)
+
+			expect(unlikedRoute).toBeDefined()
+			expect(unlikedRoute.likes).toHaveLength(0) // Assuming the user is the only one who liked it
+		})
+
+		it('should throw error when route is not liked by the user', async () => {
+			// Create a new user and try to unlike the route
+			const anotherUserId = new Types.ObjectId()
+
+			await expect(
+				routeService.unlikeRoute(routeId, anotherUserId.toString())
+			).rejects.toThrow('Route not liked')
+		})
+
+		it('should throw error when route does not exist', async () => {
+			const nonExistentRouteId = new Types.ObjectId().toString()
+
+			await expect(
+				routeService.unlikeRoute(nonExistentRouteId, userId.toString())
+			).rejects.toThrow('Route not found')
+		})
+	})
 })
