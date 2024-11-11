@@ -1,6 +1,6 @@
 import request from 'supertest'
 import app from '../../src/app'
-import { User, Conversation } from '../../src/models'
+import { User, Conversation, IConversation } from '../../src/models'
 import { Types } from 'mongoose'
 
 describe('Conversation Routes', () => {
@@ -93,6 +93,94 @@ describe('Conversation Routes', () => {
 
 			expect(response.body).toEqual({
 				message: 'Invalid participant ID format',
+			})
+		})
+
+		afterEach(async () => {
+			await User.deleteMany({})
+			await Conversation.deleteMany({})
+		})
+	})
+
+	describe('GET /conversations/user/:userId', () => {
+		let userId1: Types.ObjectId
+		let userId2: Types.ObjectId
+
+		beforeEach(async () => {
+			// Create test users
+			const user1 = await User.create({
+				name: 'Test User 1',
+				username: 'testuser1',
+				email: 'test1@example.com',
+				password: 'password123',
+				bio: 'Test bio 1',
+			})
+			userId1 = user1._id as Types.ObjectId
+
+			const user2 = await User.create({
+				name: 'Test User 2',
+				username: 'testuser2',
+				email: 'test2@example.com',
+				password: 'password123',
+				bio: 'Test bio 2',
+			})
+			userId2 = user2._id as Types.ObjectId
+
+			// Create multiple conversations for testing pagination
+			const promises = Array.from({ length: 25 }, () =>
+				Conversation.create({
+					participants: [userId1, userId2],
+				})
+			)
+			await Promise.all(promises)
+		})
+
+		it('should get conversations with default pagination', async () => {
+			const response = await request(app)
+				.get(`/conversations/user/${userId1}`)
+				.expect(200)
+
+			expect(response.body.data).toHaveLength(20) // Default limit
+			expect(response.body.total).toBe(25)
+			expect(response.body.pages).toBe(2)
+			response.body.data.forEach((conversation: IConversation) => {
+				expect(
+					conversation.participants.map((p: { _id: Types.ObjectId }) =>
+						p._id.toString()
+					)
+				).toContain(userId1.toString())
+			})
+		})
+
+		it('should get conversations with custom pagination', async () => {
+			const response = await request(app)
+				.get(`/conversations/user/${userId1}`)
+				.query({ page: 2, limit: 10 })
+				.expect(200)
+
+			expect(response.body.data).toHaveLength(10)
+			expect(response.body.total).toBe(25)
+			expect(response.body.pages).toBe(3)
+		})
+
+		it('should return empty array when user has no conversations', async () => {
+			const nonExistentUserId = new Types.ObjectId()
+			const response = await request(app)
+				.get(`/conversations/user/${nonExistentUserId}`)
+				.expect(200)
+
+			expect(response.body.data).toHaveLength(0)
+			expect(response.body.total).toBe(0)
+			expect(response.body.pages).toBe(0)
+		})
+
+		it('should return 400 for invalid user ID format', async () => {
+			const response = await request(app)
+				.get('/conversations/user/invalid-id')
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Invalid user ID format',
 			})
 		})
 
