@@ -46,4 +46,21 @@ router.delete('/:routeId/like/:userId', async (req: Request, res: Response) => {
 	}
 })
 
+// Add comment
+router.post('/:routeId/comments', async (req: Request, res: Response) => {
+	try {
+		const { userId, content } = req.body
+		const route = await routeService.addComment(
+			req.params.routeId,
+			userId,
+			content
+		)
+		res.json(route)
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : 'An unknown error occurred'
+		res.status(400).json({ message: errorMessage })
+	}
+})
+
 export default router

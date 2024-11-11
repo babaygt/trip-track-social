@@ -289,4 +289,87 @@ describe('Route Routes', () => {
 			await User.deleteMany({})
 		})
 	})
+
+	describe('POST /routes/:routeId/comments', () => {
+		let routeId: string
+		let userId: Types.ObjectId
+
+		beforeEach(async () => {
+			// Create a test user
+			const user = await User.create({
+				name: 'Test User',
+				username: 'testuser',
+				email: 'test@example.com',
+				password: 'password123',
+				bio: 'Test bio',
+			})
+			userId = user._id as Types.ObjectId
+
+			// Create a test route
+			const route = await Route.create({
+				title: 'Test Route',
+				creator: userId,
+				startPoint: { lat: 0, lng: 0 },
+				endPoint: { lat: 1, lng: 1 },
+				travelMode: 'DRIVING',
+				description: 'Test description',
+				totalDistance: 100,
+				totalTime: 3600,
+			})
+			routeId = (route._id as Types.ObjectId).toString()
+		})
+
+		it('should successfully add a comment to a route', async () => {
+			const commentContent = 'This is a test comment'
+			const response = await request(app)
+				.post(`/routes/${routeId}/comments`)
+				.send({ userId: userId.toString(), content: commentContent })
+				.expect(200)
+
+			expect(response.body).toBeDefined()
+			expect(response.body.comments).toHaveLength(1)
+			expect(response.body.comments[0].content).toBe(commentContent)
+			expect(response.body.comments[0].user._id.toString()).toBe(
+				userId.toString()
+			)
+
+			// Verify in database
+			const route = await Route.findById(routeId)
+			expect(route?.comments).toHaveLength(1)
+			expect(route?.comments[0].content).toBe(commentContent)
+		})
+
+		it('should return 400 when trying to add a comment to a non-existent route', async () => {
+			const nonExistentRouteId = new Types.ObjectId().toString()
+			const commentContent = 'This comment should not be added'
+
+			const response = await request(app)
+				.post(`/routes/${nonExistentRouteId}/comments`)
+				.send({ userId: userId.toString(), content: commentContent })
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Route not found',
+			})
+		})
+
+		it('should return 400 for invalid route ID format', async () => {
+			const invalidRouteId = 'invalid-id'
+			const commentContent = 'This comment should not be added'
+
+			const response = await request(app)
+				.post(`/routes/${invalidRouteId}/comments`)
+				.send({ userId: userId.toString(), content: commentContent })
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Invalid ID format',
+			})
+		})
+
+		afterEach(async () => {
+			await Route.deleteMany({})
+			await User.deleteMany({})
+		})
+	})
 })
