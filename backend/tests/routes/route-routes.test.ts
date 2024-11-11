@@ -700,4 +700,78 @@ describe('Route Routes', () => {
 			await User.deleteMany({})
 		})
 	})
+
+	describe('GET /routes/nearby', () => {
+		let userId: Types.ObjectId
+
+		beforeEach(async () => {
+			// Create a test user
+			const user = await User.create({
+				name: 'Test User',
+				username: 'testuser',
+				email: 'test@example.com',
+				password: 'password123',
+				bio: 'Test bio',
+			})
+			userId = user._id as Types.ObjectId
+
+			// Create test routes
+			await Route.create([
+				{
+					title: 'Nearby Route 1',
+					creator: userId,
+					startPoint: { lat: 0, lng: 0 },
+					endPoint: { lat: 1, lng: 1 },
+					travelMode: 'DRIVING',
+					description: 'A nearby route',
+					totalDistance: 100,
+					totalTime: 3600,
+				},
+				{
+					title: 'Far Route',
+					creator: userId,
+					startPoint: { lat: 50, lng: 50 },
+					endPoint: { lat: 51, lng: 51 },
+					travelMode: 'WALKING',
+					description: 'A far route',
+					totalDistance: 200,
+					totalTime: 7200,
+				},
+			])
+		})
+
+		it('should return routes within the specified radius', async () => {
+			const response = await request(app)
+				.get('/routes/nearby?lat=0&lng=0&radius=10')
+				.expect(200)
+
+			expect(response.body).toBeDefined()
+			expect(response.body.data).toHaveLength(1)
+			expect(response.body.data[0].title).toBe('Nearby Route 1')
+		})
+
+		it('should return an empty array if no routes are within the specified radius', async () => {
+			const response = await request(app)
+				.get('/routes/nearby?lat=89&lng=180&radius=1')
+				.expect(200)
+
+			expect(response.body).toBeDefined()
+			expect(response.body.data).toHaveLength(0)
+		})
+
+		it('should return 400 for invalid coordinates', async () => {
+			const response = await request(app)
+				.get('/routes/nearby?lat=invalid&lng=invalid')
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Invalid coordinates',
+			})
+		})
+
+		afterEach(async () => {
+			await Route.deleteMany({})
+			await User.deleteMany({})
+		})
+	})
 })

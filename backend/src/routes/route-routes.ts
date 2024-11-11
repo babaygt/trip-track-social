@@ -122,4 +122,32 @@ router.get('/search', async (req: Request, res: Response) => {
 	}
 })
 
+// Get nearby routes
+router.get('/nearby', async (req: Request, res: Response) => {
+	try {
+		const lat = parseFloat(req.query.lat as string)
+		const lng = parseFloat(req.query.lng as string)
+		const radius = parseFloat(req.query.radius as string) || 10
+		const page = parseInt(req.query.page as string) || 1
+		const limit = parseInt(req.query.limit as string) || 10
+
+		if (isNaN(lat) || isNaN(lng)) {
+			return res.status(400).json({ message: 'Invalid coordinates' })
+		}
+
+		const routes = await routeService.getNearbyRoutes(
+			lat,
+			lng,
+			radius,
+			page,
+			limit
+		)
+		res.json(routes)
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : 'An unknown error occurred'
+		res.status(400).json({ message: errorMessage })
+	}
+})
+
 export default router
