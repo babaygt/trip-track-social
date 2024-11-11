@@ -1,6 +1,7 @@
 import { ConversationService } from '../../src/services/conversation-service'
 import { User } from '../../src/models'
 import { Types } from 'mongoose'
+import { Conversation } from '../../src/models/conversation'
 
 describe('ConversationService', () => {
 	let conversationService: ConversationService
@@ -77,6 +78,71 @@ describe('ConversationService', () => {
 			await expect(
 				conversationService.createConversation([userId1.toString(), invalidId])
 			).rejects.toThrow('Invalid participant ID format')
+		})
+	})
+
+	describe('getConversationsByUserId', () => {
+		beforeEach(async () => {
+			// Clear any existing conversations
+			await Conversation.deleteMany({})
+
+			// Create multiple conversations for testing pagination
+			const promises = Array.from({ length: 25 }, () =>
+				Conversation.create({
+					participants: [userId1, userId2],
+				})
+			)
+			await Promise.all(promises)
+		})
+
+		it('should get conversations for a user with default pagination', async () => {
+			const result = await conversationService.getConversationsByUserId(
+				userId1.toString()
+			)
+
+			expect(result.data).toHaveLength(20) // Default limit
+			expect(result.total).toBe(25)
+			expect(result.pages).toBe(2)
+			result.data.forEach((conversation) => {
+				expect(
+					conversation.participants.map((p) => p._id.toString())
+				).toContain(userId1.toString())
+			})
+		})
+
+		it('should get conversations with custom pagination', async () => {
+			const result = await conversationService.getConversationsByUserId(
+				userId1.toString(),
+				2,
+				10
+			)
+
+			expect(result.data).toHaveLength(10)
+			expect(result.total).toBe(25)
+			expect(result.pages).toBe(3)
+		})
+
+		it('should return empty array when user has no conversations', async () => {
+			const nonExistentUserId = new Types.ObjectId()
+			const result = await conversationService.getConversationsByUserId(
+				nonExistentUserId.toString()
+			)
+
+			expect(result.data).toHaveLength(0)
+			expect(result.total).toBe(0)
+			expect(result.pages).toBe(0)
+		})
+
+		it('should throw error for invalid user ID format', async () => {
+			const invalidId = 'invalid-id'
+
+			await expect(
+				conversationService.getConversationsByUserId(invalidId)
+			).rejects.toThrow('Invalid user ID format')
+		})
+
+		afterEach(async () => {
+			await Conversation.deleteMany({})
 		})
 	})
 

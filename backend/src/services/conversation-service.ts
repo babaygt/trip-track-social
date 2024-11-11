@@ -29,4 +29,21 @@ export class ConversationService extends BaseService<IConversation> {
 
 		return this.create({ participants })
 	}
+
+	async getConversationsByUserId(
+		userId: string,
+		page: number = 1,
+		limit: number = 20
+	) {
+		if (!Types.ObjectId.isValid(userId)) {
+			throw new Error('Invalid user ID format')
+		}
+
+		return this.findWithPagination(
+			{ participants: new Types.ObjectId(userId) },
+			page,
+			limit,
+			{ sort: { updatedAt: -1 } }
+		)
+	}
 }
