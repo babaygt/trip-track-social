@@ -63,4 +63,24 @@ router.post('/:routeId/comments', async (req: Request, res: Response) => {
 	}
 })
 
+// Remove comment
+router.delete(
+	'/:routeId/comments/:commentId',
+	async (req: Request, res: Response) => {
+		try {
+			const { userId } = req.body
+			const route = await routeService.removeComment(
+				req.params.routeId,
+				req.params.commentId,
+				userId
+			)
+			res.json(route)
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : 'An unknown error occurred'
+			res.status(400).json({ message: errorMessage })
+		}
+	}
+)
+
 export default router

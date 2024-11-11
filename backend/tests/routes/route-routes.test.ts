@@ -372,4 +372,120 @@ describe('Route Routes', () => {
 			await User.deleteMany({})
 		})
 	})
+
+	describe('DELETE /routes/:routeId/comments/:commentId', () => {
+		let routeId: string
+		let userId: Types.ObjectId
+		let commentId: string
+
+		beforeEach(async () => {
+			// Create a test user
+			const user = await User.create({
+				name: 'Test User',
+				username: 'testuser',
+				email: 'test@example.com',
+				password: 'password123',
+				bio: 'Test bio',
+			})
+			userId = user._id as Types.ObjectId
+
+			// Create a test route
+			const route = await Route.create({
+				title: 'Test Route',
+				creator: userId,
+				startPoint: { lat: 0, lng: 0 },
+				endPoint: { lat: 1, lng: 1 },
+				travelMode: 'DRIVING',
+				description: 'Test description',
+				totalDistance: 100,
+				totalTime: 3600,
+				comments: [
+					{
+						content: 'This is a test comment',
+						user: userId,
+					},
+				],
+			})
+			routeId = (route._id as Types.ObjectId).toString()
+			commentId = (route.comments[0]._id as Types.ObjectId).toString()
+		})
+
+		it('should successfully remove a comment from a route', async () => {
+			const response = await request(app)
+				.delete(`/routes/${routeId}/comments/${commentId}`)
+				.send({ userId: userId.toString() })
+				.expect(200)
+
+			expect(response.body).toBeDefined()
+			expect(response.body.comments).toHaveLength(0)
+
+			// Verify in database
+			const route = await Route.findById(routeId)
+			expect(route?.comments).toHaveLength(0)
+		})
+
+		it('should return 400 when trying to remove a non-existent comment', async () => {
+			const nonExistentCommentId = new Types.ObjectId().toString()
+
+			const response = await request(app)
+				.delete(`/routes/${routeId}/comments/${nonExistentCommentId}`)
+				.send({ userId: userId.toString() })
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Comment not found',
+			})
+		})
+
+		it('should return 400 when user is not authorized to remove the comment', async () => {
+			// Create another user
+			const anotherUser = await User.create({
+				name: 'Another User',
+				username: 'anotheruser',
+				email: 'another@example.com',
+				password: 'password123',
+				bio: 'Another bio',
+			})
+
+			const response = await request(app)
+				.delete(`/routes/${routeId}/comments/${commentId}`)
+				.send({ userId: (anotherUser._id as Types.ObjectId).toString() })
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Not authorized to remove this comment',
+			})
+		})
+
+		it('should return 400 when route does not exist', async () => {
+			const nonExistentRouteId = new Types.ObjectId().toString()
+
+			const response = await request(app)
+				.delete(`/routes/${nonExistentRouteId}/comments/${commentId}`)
+				.send({ userId: userId.toString() })
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Route not found',
+			})
+		})
+
+		it('should return 400 for invalid route ID format', async () => {
+			const invalidRouteId = 'invalid-id'
+
+			const response = await request(app)
+				.delete(`/routes/${invalidRouteId}/comments/${commentId}`)
+				.send({ userId: userId.toString() })
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Invalid ID format',
+			})
+		})
+
+		afterEach(async () => {
+			await Route.deleteMany({})
+			await User.deleteMany({})
+		})
+	})
 })
