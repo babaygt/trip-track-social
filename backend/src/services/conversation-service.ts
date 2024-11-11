@@ -46,4 +46,26 @@ export class ConversationService extends BaseService<IConversation> {
 			{ sort: { updatedAt: -1 } }
 		)
 	}
+
+	async updateLastMessage(
+		conversationId: string,
+		messageId: string
+	): Promise<IConversation> {
+		if (
+			!Types.ObjectId.isValid(conversationId) ||
+			!Types.ObjectId.isValid(messageId)
+		) {
+			throw new Error('Invalid ID format')
+		}
+
+		const updatedConversation = await this.update(conversationId, {
+			lastMessage: new Types.ObjectId(messageId),
+		})
+
+		if (!updatedConversation) {
+			throw new Error('Conversation not found')
+		}
+
+		return updatedConversation
+	}
 }

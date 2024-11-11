@@ -2,6 +2,7 @@ import { ConversationService } from '../../src/services/conversation-service'
 import { User } from '../../src/models'
 import { Types } from 'mongoose'
 import { Conversation } from '../../src/models/conversation'
+import { Message } from '../../src/models/message'
 
 describe('ConversationService', () => {
 	let conversationService: ConversationService
@@ -142,6 +143,81 @@ describe('ConversationService', () => {
 		})
 
 		afterEach(async () => {
+			await Conversation.deleteMany({})
+		})
+	})
+
+	describe('updateLastMessage', () => {
+		let messageId: Types.ObjectId
+		let conversationId: Types.ObjectId
+
+		beforeEach(async () => {
+			// Create a test conversation
+			const conversation = await Conversation.create({
+				participants: [userId1, userId2],
+			})
+			conversationId = conversation._id as Types.ObjectId
+
+			// Create a test message
+			const message = await Message.create({
+				conversation: conversationId,
+				sender: userId1,
+				content: 'Test message content',
+				readBy: [userId1],
+			})
+			messageId = message._id as Types.ObjectId
+		})
+
+		it('should update last message successfully', async () => {
+			const updatedConversation = await conversationService.updateLastMessage(
+				conversationId.toString(),
+				messageId.toString()
+			)
+
+			expect(updatedConversation).toBeDefined()
+			expect(updatedConversation.lastMessage?._id.toString()).toBe(
+				messageId.toString()
+			)
+
+			// Verify in database
+			const savedConversation = await Conversation.findById(conversationId)
+			expect(savedConversation?.lastMessage?._id.toString()).toBe(
+				messageId.toString()
+			)
+		})
+
+		it('should throw error for invalid conversation ID format', async () => {
+			const invalidId = 'invalid-id'
+
+			await expect(
+				conversationService.updateLastMessage(invalidId, messageId.toString())
+			).rejects.toThrow('Invalid ID format')
+		})
+
+		it('should throw error for invalid message ID format', async () => {
+			const invalidId = 'invalid-id'
+
+			await expect(
+				conversationService.updateLastMessage(
+					conversationId.toString(),
+					invalidId
+				)
+			).rejects.toThrow('Invalid ID format')
+		})
+
+		it('should throw error when conversation does not exist', async () => {
+			const nonExistentId = new Types.ObjectId().toString()
+
+			await expect(
+				conversationService.updateLastMessage(
+					nonExistentId,
+					messageId.toString()
+				)
+			).rejects.toThrow('Conversation not found')
+		})
+
+		afterEach(async () => {
+			await Message.deleteMany({})
 			await Conversation.deleteMany({})
 		})
 	})
