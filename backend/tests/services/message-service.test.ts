@@ -1,5 +1,5 @@
 import { MessageService } from '../../src/services/message-service'
-import { User, Conversation } from '../../src/models'
+import { User, Conversation, Message } from '../../src/models'
 import { Types } from 'mongoose'
 
 describe('MessageService', () => {
@@ -25,6 +25,17 @@ describe('MessageService', () => {
 			participants: [userId, new Types.ObjectId()], // Add another participant to meet minimum requirement
 		})
 		conversationId = conversation._id as Types.ObjectId
+
+		// Create multiple messages for testing pagination
+		const promises = Array.from({ length: 75 }, () =>
+			Message.create({
+				conversation: conversationId,
+				sender: userId,
+				content: 'Test message content',
+				readBy: [userId],
+			})
+		)
+		await Promise.all(promises)
 	})
 
 	describe('createMessage', () => {
@@ -136,6 +147,56 @@ describe('MessageService', () => {
 			await expect(
 				messageService.markAsRead(nonExistentMessageId, userId.toString())
 			).rejects.toThrow('Message not found')
+		})
+	})
+
+	describe('getMessagesByConversation', () => {
+		it('should get messages with default pagination', async () => {
+			const result = await messageService.getMessagesByConversation(
+				conversationId.toString()
+			)
+
+			expect(result.data).toHaveLength(50) // Default limit
+			expect(result.total).toBe(75)
+			expect(result.pages).toBe(2)
+			result.data.forEach((message) => {
+				expect(message.conversation.toString()).toBe(conversationId.toString())
+			})
+		})
+
+		it('should get messages with custom pagination', async () => {
+			const result = await messageService.getMessagesByConversation(
+				conversationId.toString(),
+				2,
+				25
+			)
+
+			expect(result.data).toHaveLength(25)
+			expect(result.total).toBe(75)
+			expect(result.pages).toBe(3)
+		})
+
+		it('should return empty array when conversation has no messages', async () => {
+			const emptyConversationId = new Types.ObjectId()
+			const result = await messageService.getMessagesByConversation(
+				emptyConversationId.toString()
+			)
+
+			expect(result.data).toHaveLength(0)
+			expect(result.total).toBe(0)
+			expect(result.pages).toBe(0)
+		})
+
+		it('should throw error for invalid conversation ID format', async () => {
+			const invalidId = 'invalid-id'
+
+			await expect(
+				messageService.getMessagesByConversation(invalidId)
+			).rejects.toThrow('Invalid conversation ID format')
+		})
+
+		afterEach(async () => {
+			await Message.deleteMany({})
 		})
 	})
 

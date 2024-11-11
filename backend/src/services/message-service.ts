@@ -52,4 +52,21 @@ export class MessageService extends BaseService<IMessage> {
 		if (!updatedMessage) throw new Error('Failed to mark message as read')
 		return updatedMessage
 	}
+
+	async getMessagesByConversation(
+		conversationId: string,
+		page: number = 1,
+		limit: number = 50
+	) {
+		if (!Types.ObjectId.isValid(conversationId)) {
+			throw new Error('Invalid conversation ID format')
+		}
+
+		return this.findWithPagination(
+			{ conversation: conversationId },
+			page,
+			limit,
+			{ sort: { createdAt: -1 } }
+		)
+	}
 }
