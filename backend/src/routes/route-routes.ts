@@ -107,4 +107,19 @@ router.get('/user/:userId', async (req: Request, res: Response) => {
 	}
 })
 
+// Search routes
+router.get('/search', async (req: Request, res: Response) => {
+	try {
+		const query = req.query.q as string
+		const page = parseInt(req.query.page as string) || 1
+		const limit = parseInt(req.query.limit as string) || 10
+		const routes = await routeService.searchRoutes(query, page, limit)
+		res.json(routes)
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : 'An unknown error occurred'
+		res.status(400).json({ message: errorMessage })
+	}
+})
+
 export default router

@@ -585,4 +585,119 @@ describe('Route Routes', () => {
 			await User.deleteMany({})
 		})
 	})
+
+	describe('GET /routes/search', () => {
+		let userId: Types.ObjectId
+
+		beforeEach(async () => {
+			// Create a test user
+			const user = await User.create({
+				name: 'Test User',
+				username: 'testuser',
+				email: 'test@example.com',
+				password: 'password123',
+				bio: 'Test bio',
+			})
+			userId = user._id as Types.ObjectId
+
+			// Create test routes
+			await Route.create([
+				{
+					title: 'Scenic Route',
+					creator: userId,
+					startPoint: { lat: 0, lng: 0 },
+					endPoint: { lat: 1, lng: 1 },
+					travelMode: 'DRIVING',
+					description: 'A beautiful scenic route',
+					totalDistance: 100,
+					totalTime: 3600,
+					tags: ['scenic', 'nature'],
+				},
+				{
+					title: 'Urban Route',
+					creator: userId,
+					startPoint: { lat: 2, lng: 2 },
+					endPoint: { lat: 3, lng: 3 },
+					travelMode: 'WALKING',
+					description: 'A city route',
+					totalDistance: 200,
+					totalTime: 7200,
+					tags: ['city', 'urban'],
+				},
+			])
+		})
+
+		it('should return routes matching the query', async () => {
+			const response = await request(app)
+				.get('/routes/search?q=Scenic')
+				.expect(200)
+
+			expect(response.body).toBeDefined()
+			expect(response.body.data).toHaveLength(1)
+			expect(response.body.data[0].title).toBe('Scenic Route')
+		})
+
+		it('should return routes matching the description', async () => {
+			const response = await request(app)
+				.get('/routes/search?q=city')
+				.expect(200)
+
+			expect(response.body).toBeDefined()
+			expect(response.body.data).toHaveLength(1)
+			expect(response.body.data[0].description).toContain('city')
+		})
+
+		it('should return routes matching the tags', async () => {
+			const response = await request(app)
+				.get('/routes/search?q=urban')
+				.expect(200)
+
+			expect(response.body).toBeDefined()
+			expect(response.body.data).toHaveLength(1)
+			expect(response.body.data[0].tags).toContain('urban')
+		})
+
+		it('should return an empty array if no routes match', async () => {
+			const response = await request(app)
+				.get('/routes/search?q=nonexistent')
+				.expect(200)
+
+			expect(response.body).toBeDefined()
+			expect(response.body.data).toHaveLength(0)
+		})
+
+		it('should paginate results', async () => {
+			// Create additional routes for pagination
+			await Route.create({
+				title: 'Another Scenic Route',
+				creator: userId,
+				startPoint: { lat: 4, lng: 4 },
+				endPoint: { lat: 5, lng: 5 },
+				travelMode: 'BICYCLING',
+				description: 'Another beautiful scenic route',
+				totalDistance: 300,
+				totalTime: 10800,
+				tags: ['scenic', 'long'],
+			})
+
+			const responsePage1 = await request(app)
+				.get('/routes/search?q=Scenic&page=1&limit=1')
+				.expect(200)
+
+			const responsePage2 = await request(app)
+				.get('/routes/search?q=Scenic&page=2&limit=1')
+				.expect(200)
+
+			expect(responsePage1.body.data).toHaveLength(1)
+			expect(responsePage2.body.data).toHaveLength(1)
+			expect(responsePage1.body.data[0]._id).not.toBe(
+				responsePage2.body.data[0]._id
+			)
+		})
+
+		afterEach(async () => {
+			await Route.deleteMany({})
+			await User.deleteMany({})
+		})
+	})
 })
