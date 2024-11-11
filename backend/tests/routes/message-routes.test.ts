@@ -1,6 +1,6 @@
 import request from 'supertest'
 import app from '../../src/app'
-import { User, Conversation, Message } from '../../src/models'
+import { User, Conversation, Message, IMessage } from '../../src/models'
 import { Types } from 'mongoose'
 
 describe('Message Routes', () => {
@@ -198,6 +198,94 @@ describe('Message Routes', () => {
 
 			expect(response.body).toEqual({
 				message: 'Message not found',
+			})
+		})
+
+		afterEach(async () => {
+			await User.deleteMany({})
+			await Conversation.deleteMany({})
+			await Message.deleteMany({})
+		})
+	})
+
+	describe('GET /messages/conversation/:conversationId', () => {
+		let userId: Types.ObjectId
+		let conversationId: Types.ObjectId
+
+		beforeEach(async () => {
+			// Create test user and conversation following the pattern from:
+			// typescript:backend/tests/routes/message-routes.test.ts
+			// startLine: 11
+			// endLine: 27
+
+			const user = await User.create({
+				name: 'Test User',
+				username: 'testuser',
+				email: 'test@example.com',
+				password: 'password123',
+				bio: 'Test bio',
+			})
+			userId = user._id as Types.ObjectId
+
+			const conversation = await Conversation.create({
+				participants: [userId, new Types.ObjectId()],
+			})
+			conversationId = conversation._id as Types.ObjectId
+
+			// Create multiple messages for testing pagination
+			const promises = Array.from({ length: 75 }, () =>
+				Message.create({
+					conversation: conversationId,
+					sender: userId,
+					content: 'Test message content',
+					readBy: [userId],
+				})
+			)
+			await Promise.all(promises)
+		})
+
+		it('should get messages with default pagination', async () => {
+			const response = await request(app)
+				.get(`/messages/conversation/${conversationId}`)
+				.expect(200)
+
+			expect(response.body.data).toHaveLength(50) // Default limit
+			expect(response.body.total).toBe(75)
+			expect(response.body.pages).toBe(2)
+			response.body.data.forEach((message: IMessage) => {
+				expect(message.conversation.toString()).toBe(conversationId.toString())
+			})
+		})
+
+		it('should get messages with custom pagination', async () => {
+			const response = await request(app)
+				.get(`/messages/conversation/${conversationId}`)
+				.query({ page: 2, limit: 25 })
+				.expect(200)
+
+			expect(response.body.data).toHaveLength(25)
+			expect(response.body.total).toBe(75)
+			expect(response.body.pages).toBe(3)
+		})
+
+		it('should return empty array when conversation has no messages', async () => {
+			const emptyConversationId = new Types.ObjectId()
+			const response = await request(app)
+				.get(`/messages/conversation/${emptyConversationId}`)
+				.expect(200)
+
+			expect(response.body.data).toHaveLength(0)
+			expect(response.body.total).toBe(0)
+			expect(response.body.pages).toBe(0)
+		})
+
+		it('should return 400 for invalid conversation ID format', async () => {
+			const response = await request(app)
+				.get('/messages/conversation/invalid-id')
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Invalid conversation ID format',
 			})
 		})
 

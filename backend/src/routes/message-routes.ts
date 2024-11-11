@@ -36,4 +36,25 @@ router.put('/:messageId/read/:userId', async (req: Request, res: Response) => {
 	}
 })
 
+// Get messages by conversation
+router.get(
+	'/conversation/:conversationId',
+	async (req: Request, res: Response) => {
+		try {
+			const page = parseInt(req.query.page as string) || 1
+			const limit = parseInt(req.query.limit as string) || 50
+			const messages = await messageService.getMessagesByConversation(
+				req.params.conversationId,
+				page,
+				limit
+			)
+			res.json(messages)
+		} catch (error) {
+			const errorMessage =
+				error instanceof Error ? error.message : 'An unknown error occurred'
+			res.status(400).json({ message: errorMessage })
+		}
+	}
+)
+
 export default router
