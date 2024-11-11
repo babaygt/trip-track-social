@@ -488,4 +488,101 @@ describe('Route Routes', () => {
 			await User.deleteMany({})
 		})
 	})
+
+	describe('GET /routes/user/:userId', () => {
+		let userId: Types.ObjectId
+
+		beforeEach(async () => {
+			// Create a test user
+			const user = await User.create({
+				name: 'Test User',
+				username: 'testuser',
+				email: 'test@example.com',
+				password: 'password123',
+				bio: 'Test bio',
+			})
+			userId = user._id as Types.ObjectId
+
+			// Create test routes
+			await Route.create([
+				{
+					title: 'Test Route 1',
+					creator: userId,
+					startPoint: { lat: 0, lng: 0 },
+					endPoint: { lat: 1, lng: 1 },
+					travelMode: 'DRIVING',
+					description: 'Test description 1',
+					totalDistance: 100,
+					totalTime: 3600,
+				},
+				{
+					title: 'Test Route 2',
+					creator: userId,
+					startPoint: { lat: 2, lng: 2 },
+					endPoint: { lat: 3, lng: 3 },
+					travelMode: 'WALKING',
+					description: 'Test description 2',
+					totalDistance: 200,
+					totalTime: 7200,
+				},
+			])
+		})
+
+		it('should return routes for a given user', async () => {
+			const response = await request(app)
+				.get(`/routes/user/${userId.toString()}`)
+				.expect(200)
+
+			expect(response.body).toBeDefined()
+			expect(response.body.data).toHaveLength(2)
+			expect(response.body.data[0].creator._id.toString()).toBe(
+				userId.toString()
+			)
+			expect(response.body.data[1].creator._id.toString()).toBe(
+				userId.toString()
+			)
+		})
+
+		it('should paginate results', async () => {
+			const responsePage1 = await request(app)
+				.get(`/routes/user/${userId.toString()}?page=1&limit=1`)
+				.expect(200)
+
+			const responsePage2 = await request(app)
+				.get(`/routes/user/${userId.toString()}?page=2&limit=1`)
+				.expect(200)
+
+			expect(responsePage1.body.data).toHaveLength(1)
+			expect(responsePage2.body.data).toHaveLength(1)
+			expect(responsePage1.body.data[0]._id).not.toBe(
+				responsePage2.body.data[0]._id
+			)
+		})
+
+		it('should return an empty array if user has no routes', async () => {
+			const anotherUserId = new Types.ObjectId().toString()
+			const response = await request(app)
+				.get(`/routes/user/${anotherUserId}`)
+				.expect(200)
+
+			expect(response.body).toBeDefined()
+			expect(response.body.data).toHaveLength(0)
+		})
+
+		it('should return 400 for invalid user ID format', async () => {
+			const invalidUserId = 'invalid-id'
+			const response = await request(app)
+				.get(`/routes/user/${invalidUserId}`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Invalid ID format',
+			})
+		})
+
+		afterEach(async () => {
+			await Route.deleteMany({})
+			await User.deleteMany({})
+		})
+	})
 })

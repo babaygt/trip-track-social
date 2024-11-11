@@ -83,4 +83,28 @@ router.delete(
 	}
 )
 
+// Get routes by user
+router.get('/user/:userId', async (req: Request, res: Response) => {
+	try {
+		const page = parseInt(req.query.page as string) || 1
+		const limit = parseInt(req.query.limit as string) || 10
+		const routes = await routeService.getRoutesByUser(
+			req.params.userId,
+			page,
+			limit
+		)
+		res.json(routes)
+	} catch (error) {
+		let errorMessage = 'An unknown error occurred'
+		if (error instanceof Error) {
+			if (error.name === 'CastError') {
+				errorMessage = 'Invalid ID format'
+			} else {
+				errorMessage = error.message
+			}
+		}
+		res.status(400).json({ message: errorMessage })
+	}
+})
+
 export default router
