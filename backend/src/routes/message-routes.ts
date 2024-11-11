@@ -21,4 +21,19 @@ router.post('/', async (req: Request, res: Response) => {
 	}
 })
 
+// Mark message as read
+router.put('/:messageId/read/:userId', async (req: Request, res: Response) => {
+	try {
+		const message = await messageService.markAsRead(
+			req.params.messageId,
+			req.params.userId
+		)
+		res.json(message)
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : 'An unknown error occurred'
+		res.status(400).json({ message: errorMessage })
+	}
+})
+
 export default router
