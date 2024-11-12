@@ -10,6 +10,9 @@ import userRouter from './routes/user-routes'
 import routeRoutes from './routes/route-routes'
 import messageRoutes from './routes/message-routes'
 import conversationRoutes from './routes/conversation-routes'
+import session from 'express-session'
+import { sessionConfig } from './config/session-config'
+import authRouter from './routes/auth-routes'
 dotenv.config()
 
 const app: Express = express()
@@ -19,12 +22,14 @@ app.use(cookieParser())
 app.use(morgan('dev'))
 app.use(cors(corsOptions))
 app.use('/', express.static(path.join(__dirname, 'public')))
+app.use(session(sessionConfig))
 
 app.use('/', indexRouter)
 app.use('/users', userRouter)
 app.use('/routes', routeRoutes)
 app.use('/messages', messageRoutes)
 app.use('/conversations', conversationRoutes)
+app.use('/auth', authRouter)
 app.all('*', (req, res) => {
 	res.status(404)
 	if (req.accepts('html')) {
