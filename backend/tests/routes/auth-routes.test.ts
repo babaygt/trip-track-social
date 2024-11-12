@@ -1,11 +1,12 @@
 import request from 'supertest'
 import app from '../../src/app'
-import { User } from '../../src/models'
+import { User, IUser } from '../../src/models'
 import { UserService } from '../../src/services/user-service'
 import express, { NextFunction } from 'express'
 import router from '../../src/routes/auth-routes'
 import { Request, Response } from 'express'
-import { Session } from 'express-session'
+import session, { Session, SessionData } from 'express-session'
+import { AuthService } from '../../src/services/auth-service'
 
 describe('Auth Routes', () => {
 	let userService: UserService
@@ -150,6 +151,73 @@ describe('Auth Routes', () => {
 
 			expect(response.body).toEqual({
 				message: 'Could not log out',
+			})
+		})
+	})
+
+	describe('GET /auth/session', () => {
+		it('should return the current session if user is logged in', async () => {
+			// Mock session middleware
+			const mockSession = {
+				userId: 'validUserId',
+				isAdmin: false,
+				save: (cb: (err: Error | null) => void) => cb(null),
+				regenerate: (cb: (err: Error | null) => void) => cb(null),
+				destroy: (cb: (err: Error | null) => void) => cb(null),
+				reload: (cb: (err: Error | null) => void) => cb(null),
+				touch: () => {},
+				cookie: {
+					maxAge: 3600000,
+				},
+				id: 'test-session-id',
+			} as Session & Partial<SessionData>
+
+			// Create test user
+			const testUser = await userService.createUser({
+				name: 'Test User',
+				username: 'testuser',
+				email: 'test@example.com',
+				password: 'password123',
+				bio: 'Test bio',
+			})
+
+			// Mock AuthService validateSession method
+			jest.spyOn(AuthService.prototype, 'validateSession').mockResolvedValue({
+				id: testUser.id,
+				name: testUser.name,
+				email: testUser.email,
+				isAdmin: false,
+			} as IUser)
+
+			const mockApp = express()
+			mockApp.use(
+				session({
+					secret: 'test',
+					resave: false,
+					saveUninitialized: false,
+				})
+			)
+			mockApp.use((req, _, next) => {
+				req.session = mockSession
+				next()
+			})
+			mockApp.use('/auth', router)
+
+			const response = await request(mockApp).get('/auth/session').expect(200)
+
+			expect(response.body).toEqual({
+				id: expect.any(String),
+				name: expect.any(String),
+				email: expect.any(String),
+				isAdmin: false,
+			})
+		}, 15000) // Increased timeout to 15 seconds
+
+		it('should return 401 if no active session', async () => {
+			const response = await request(app).get('/auth/session').expect(401)
+
+			expect(response.body).toEqual({
+				message: 'No active session',
 			})
 		})
 	})

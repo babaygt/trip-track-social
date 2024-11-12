@@ -51,4 +51,25 @@ router.post('/logout', (req: Request, res: Response) => {
 	})
 })
 
+// Get current session
+router.get('/session', async (req: Request, res: Response) => {
+	try {
+		if (!req.session.userId) {
+			return res.status(401).json({ message: 'No active session' })
+		}
+
+		const user = await authService.validateSession(req.session.userId)
+		res.json({
+			id: user.id,
+			name: user.name,
+			email: user.email,
+			isAdmin: user.isAdmin,
+		})
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : 'An unknown error occurred'
+		res.status(401).json({ message: errorMessage })
+	}
+})
+
 export default router
