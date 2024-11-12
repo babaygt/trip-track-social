@@ -40,4 +40,15 @@ router.post(
 	}
 )
 
+// Logout
+router.post('/logout', (req: Request, res: Response) => {
+	req.session.destroy((err) => {
+		if (err) {
+			return res.status(500).json({ message: 'Could not log out' })
+		}
+		res.clearCookie('connect.sid')
+		res.json({ message: 'Logged out successfully' })
+	})
+})
+
 export default router
