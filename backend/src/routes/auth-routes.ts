@@ -1,6 +1,7 @@
 import express, { Request, Response, Router } from 'express'
 import { AuthService } from '../services/auth-service'
 import { body, validationResult } from 'express-validator'
+import 'express-session'
 
 const router: Router = express.Router()
 const authService = new AuthService()
