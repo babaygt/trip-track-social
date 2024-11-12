@@ -1,5 +1,6 @@
 import { UserService } from './user-service'
 import { IUser } from '../models'
+import { Types } from 'mongoose'
 
 export class AuthService {
 	private userService: UserService
@@ -25,5 +26,18 @@ export class AuthService {
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const { password: _pwd, ...userWithoutPassword } = user.toObject()
 		return userWithoutPassword as IUser
+	}
+
+	async validateSession(userId: string): Promise<IUser> {
+		if (!Types.ObjectId.isValid(userId)) {
+			throw new Error('Invalid session')
+		}
+
+		const user = await this.userService.findById(userId)
+		if (!user) {
+			throw new Error('Invalid session')
+		}
+
+		return user
 	}
 }

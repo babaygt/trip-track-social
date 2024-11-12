@@ -54,4 +54,42 @@ describe('AuthService', () => {
 			await User.deleteMany({})
 		})
 	})
+
+	describe('validateSession', () => {
+		const validUserData = {
+			name: 'Test User',
+			username: 'testuser',
+			email: 'test@example.com',
+			password: 'password123',
+			bio: 'Test bio',
+		}
+
+		it('should successfully validate a valid session', async () => {
+			// Create a test user first
+			const createdUser = await userService.createUser(validUserData)
+
+			const user = await authService.validateSession(createdUser.id)
+
+			expect(user).toBeDefined()
+			expect(user.email).toBe(validUserData.email)
+			expect(user.name).toBe(validUserData.name)
+		})
+
+		it('should throw error with invalid ObjectId format', async () => {
+			await expect(authService.validateSession('invalid-id')).rejects.toThrow(
+				'Invalid session'
+			)
+		})
+
+		it('should throw error with non-existent user ID', async () => {
+			const nonExistentId = '507f1f77bcf86cd799439011' // Valid MongoDB ObjectId format
+			await expect(authService.validateSession(nonExistentId)).rejects.toThrow(
+				'Invalid session'
+			)
+		})
+
+		afterEach(async () => {
+			await User.deleteMany({})
+		})
+	})
 })
