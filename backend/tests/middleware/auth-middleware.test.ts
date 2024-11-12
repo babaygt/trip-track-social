@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import { isAuthenticated } from '../../src/middleware/auth-middleware'
+import { isAuthenticated, isAdmin } from '../../src/middleware/auth-middleware'
 import { AuthService } from '../../src/services/auth-service'
 import { Session, SessionData } from 'express-session'
 import { IUser } from '../../src/models'
@@ -78,6 +78,55 @@ describe('Auth Middleware', () => {
 
 		expect(mockResponse.status).toHaveBeenCalledWith(401)
 		expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Invalid session' })
+		expect(nextFunction).not.toHaveBeenCalled()
+	})
+})
+
+describe('Admin Middleware', () => {
+	let mockRequest: Partial<Request>
+	let mockResponse: Partial<Response>
+	let nextFunction: NextFunction
+
+	beforeEach(() => {
+		mockRequest = {
+			session: {} as Session & Partial<SessionData>,
+		}
+		mockResponse = {
+			status: jest.fn().mockReturnThis(),
+			json: jest.fn(),
+		}
+		nextFunction = jest.fn()
+	})
+
+	it('should call next() when user is admin', () => {
+		mockRequest.session = {
+			isAdmin: true,
+		} as Session & Partial<SessionData>
+
+		isAdmin(mockRequest as Request, mockResponse as Response, nextFunction)
+
+		expect(nextFunction).toHaveBeenCalled()
+		expect(mockResponse.status).not.toHaveBeenCalled()
+		expect(mockResponse.json).not.toHaveBeenCalled()
+	})
+
+	it('should return 403 when user is not admin', () => {
+		mockRequest.session = {
+			isAdmin: false,
+		} as Session & Partial<SessionData>
+
+		isAdmin(mockRequest as Request, mockResponse as Response, nextFunction)
+
+		expect(mockResponse.status).toHaveBeenCalledWith(403)
+		expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Forbidden' })
+		expect(nextFunction).not.toHaveBeenCalled()
+	})
+
+	it('should return 403 when isAdmin is not set in session', () => {
+		isAdmin(mockRequest as Request, mockResponse as Response, nextFunction)
+
+		expect(mockResponse.status).toHaveBeenCalledWith(403)
+		expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Forbidden' })
 		expect(nextFunction).not.toHaveBeenCalled()
 	})
 })

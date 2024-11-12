@@ -29,3 +29,10 @@ export const isAuthenticated = async (
 		})
 	}
 }
+
+export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
+	if (!req.session.isAdmin) {
+		return res.status(403).json({ message: 'Forbidden' })
+	}
+	next()
+}
