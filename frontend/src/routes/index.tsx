@@ -5,7 +5,7 @@ import { RouteObject } from 'react-router-dom'
 const Register = lazy(() => import('@/features/auth/register'))
 const Login = lazy(() => import('@/features/auth/login/'))
 const Profile = lazy(() => import('@/features/profile/page'))
-
+const RouteCreator = lazy(() => import('@/features/route/index'))
 export const routes: RouteObject[] = [
 	{
 		path: '/register',
@@ -22,5 +22,9 @@ export const routes: RouteObject[] = [
 	{
 		path: '/profile/:username',
 		element: <Profile />,
+	},
+	{
+		path: '/create-route',
+		element: <RouteCreator />,
 	},
 ]
