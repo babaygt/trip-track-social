@@ -4,6 +4,27 @@ import { UserService } from '../services/user-service'
 const router: Router = express.Router()
 const userService = new UserService()
 
+// Get user by username
+router.get('/find/:username?', async (req: Request, res: Response) => {
+	const { username } = req.params
+
+	if (!username || username.trim() === '') {
+		return res.status(400).json({ message: 'Username is required' })
+	}
+
+	try {
+		const user = await userService.getUserByUsername(username)
+		if (!user) {
+			return res.status(404).json({ message: 'User not found' })
+		}
+		res.json(user)
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : 'An unknown error occurred'
+		res.status(400).json({ message: errorMessage })
+	}
+})
+
 // Create user
 router.post('/', async (req: Request, res: Response) => {
 	try {

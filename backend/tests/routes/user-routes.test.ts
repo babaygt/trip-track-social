@@ -855,4 +855,48 @@ describe('User Routes', () => {
 			})
 		})
 	})
+
+	describe('GET /users/find/:username', () => {
+		const userData = {
+			name: 'Test User',
+			username: 'testuser',
+			email: 'test@example.com',
+			password: 'password123',
+			bio: 'Test bio',
+		}
+
+		it('should return user by username', async () => {
+			// First create a user
+			await request(app).post('/users').send(userData).expect(201)
+
+			// Get user by username
+			const response = await request(app)
+				.get(`/users/find/${userData.username}`)
+				.expect(200)
+
+			expect(response.body.username).toBe(userData.username)
+			expect(response.body.name).toBe(userData.name)
+			expect(response.body.email).toBe(userData.email)
+			expect(response.body.bio).toBe(userData.bio)
+			expect(response.body).not.toHaveProperty('password')
+		})
+
+		it('should return 404 when username does not exist', async () => {
+			const response = await request(app)
+				.get('/users/find/nonexistentuser')
+				.expect(404)
+
+			expect(response.body).toEqual({
+				message: 'User not found',
+			})
+		})
+
+		it('should return 400 when username is empty', async () => {
+			const response = await request(app).get('/users/find/').expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Username is required',
+			})
+		})
+	})
 })
