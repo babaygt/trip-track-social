@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMapsLibrary, useMap } from '@vis.gl/react-google-maps'
 import { Button } from '@/components/ui/button'
 import { X } from 'lucide-react'
@@ -10,6 +10,7 @@ interface LocationInputProps {
 	onRemove?: () => void
 	inputId: string
 	label?: string
+	value?: string
 }
 
 export const LocationInput: React.FC<LocationInputProps> = ({
@@ -18,11 +19,17 @@ export const LocationInput: React.FC<LocationInputProps> = ({
 	onRemove,
 	inputId,
 	label,
+	value = '',
 }) => {
 	const map = useMap()
 	const places = useMapsLibrary('places')
 	const inputRef = useRef<HTMLInputElement>(null)
 	const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
+	const [inputValue, setInputValue] = useState(value)
+
+	useEffect(() => {
+		setInputValue(value)
+	}, [value])
 
 	useEffect(() => {
 		if (!places || !inputRef.current) return
@@ -40,14 +47,8 @@ export const LocationInput: React.FC<LocationInputProps> = ({
 				if (autocompleteRef.current) {
 					const place = autocompleteRef.current.getPlace()
 					if (place && place.geometry && place.geometry.location) {
-						console.log('Selected place:', {
-							address: place.formatted_address,
-							lat: place.geometry.location.lat(),
-							lng: place.geometry.location.lng(),
-						})
 						onPlaceSelect(place)
-					} else {
-						console.error('Selected place has no geometry')
+						setInputValue(place.formatted_address || '')
 					}
 				}
 			}
@@ -67,6 +68,10 @@ export const LocationInput: React.FC<LocationInputProps> = ({
 		}
 	}, [places, onPlaceSelect, map])
 
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		setInputValue(e.target.value)
+	}
+
 	return (
 		<div className='w-full space-y-2'>
 			{label && <FormLabel>{label}</FormLabel>}
@@ -77,6 +82,8 @@ export const LocationInput: React.FC<LocationInputProps> = ({
 					className='w-full p-2 border rounded-md'
 					placeholder={placeholder}
 					type='text'
+					value={inputValue}
+					onChange={handleInputChange}
 				/>
 				{onRemove && (
 					<Button
