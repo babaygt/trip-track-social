@@ -545,4 +545,37 @@ describe('UserService', () => {
 			).rejects.toThrow('Invalid ID format')
 		})
 	})
+
+	describe('getUserByUsername', () => {
+		const userData = {
+			name: 'Test User',
+			username: 'testuser',
+			email: 'test@example.com',
+			password: 'password123',
+			bio: 'Test bio',
+		}
+
+		it('should return user when username exists', async () => {
+			// Create a test user first
+			const createdUser = await userService.createUser(userData)
+
+			const user = await userService.getUserByUsername(createdUser.username)
+
+			expect(user).toBeDefined()
+			expect(user?.username).toBe(userData.username)
+			expect(user?.email).toBe(userData.email)
+			expect(user?.name).toBe(userData.name)
+		})
+
+		it('should return null when username does not exist', async () => {
+			const user = await userService.getUserByUsername('nonexistentuser')
+			expect(user).toBeNull()
+		})
+
+		it('should throw error when username is empty', async () => {
+			await expect(userService.getUserByUsername('')).rejects.toThrow(
+				'Username is required'
+			)
+		})
+	})
 })

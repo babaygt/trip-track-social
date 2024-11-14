@@ -182,4 +182,11 @@ export class UserService extends BaseService<IUser> {
 		if (!updatedUser) throw new Error('Failed to remove bookmark')
 		return updatedUser
 	}
+
+	async getUserByUsername(username: string): Promise<IUser | null> {
+		if (!username) {
+			throw new Error('Username is required')
+		}
+		return this.findOne({ username })
+	}
 }
