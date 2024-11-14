@@ -37,10 +37,21 @@ describe('Auth Routes', () => {
 				.expect(200)
 
 			expect(response.body).toEqual({
-				id: expect.any(String),
-				name: validUserData.name,
+				__v: expect.any(Number),
+				_id: expect.any(String),
+				bio: validUserData.bio,
+				bookmarks: [],
+				conversations: [],
+				createdAt: expect.any(String),
 				email: validUserData.email,
+				followers: [],
+				following: [],
 				isAdmin: false,
+				isProtected: false,
+				name: validUserData.name,
+				profilePicture: expect.any(String),
+				updatedAt: expect.any(String),
+				username: validUserData.username,
 			})
 		})
 
