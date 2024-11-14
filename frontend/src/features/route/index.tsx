@@ -1,10 +1,5 @@
-import { useState, useEffect } from 'react'
-import {
-	APIProvider,
-	Map,
-	useMapsLibrary,
-	useMap,
-} from '@vis.gl/react-google-maps'
+import { useState } from 'react'
+import { APIProvider } from '@vis.gl/react-google-maps'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
@@ -34,6 +29,7 @@ import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { useCreateRoute } from './hooks/use-create-route'
 import toast from 'react-hot-toast'
+import { RouteMap } from '@/components/maps/route-map'
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
@@ -62,13 +58,6 @@ const MapContent = () => {
 		useState<google.maps.DirectionsResult | null>(null)
 	const [travelMode, setTravelMode] = useState<TravelMode>('DRIVING')
 
-	const map = useMap()
-	const routesLib = useMapsLibrary('routes')
-	const [directionsService, setDirectionsService] =
-		useState<google.maps.DirectionsService | null>(null)
-	const [directionsRenderer, setDirectionsRenderer] =
-		useState<google.maps.DirectionsRenderer | null>(null)
-
 	const form = useForm<RouteFormValues>({
 		resolver: zodResolver(routeFormSchema),
 		defaultValues: {
@@ -80,23 +69,6 @@ const MapContent = () => {
 	})
 
 	const { mutate: createRoute, isPending } = useCreateRoute()
-
-	useEffect(() => {
-		if (!routesLib || !map) return
-
-		const renderer = new routesLib.DirectionsRenderer({
-			map,
-			suppressMarkers: false,
-		})
-		const service = new routesLib.DirectionsService()
-
-		setDirectionsService(service)
-		setDirectionsRenderer(renderer)
-
-		return () => {
-			renderer.setMap(null)
-		}
-	}, [routesLib, map])
 
 	const addWaypoint = () => {
 		setWaypoints((prev) => [...prev, null])
@@ -111,7 +83,6 @@ const MapContent = () => {
 		index: number,
 		place: google.maps.places.PlaceResult
 	) => {
-		console.log('Updating waypoint:', index, place)
 		if (!place.geometry || !place.geometry.location) {
 			console.error('Invalid place data for waypoint')
 			return
@@ -124,67 +95,6 @@ const MapContent = () => {
 		}
 		setWaypoints(newWaypoints)
 	}
-
-	const calculateRoute = async () => {
-		if (
-			!directionsService ||
-			!directionsRenderer ||
-			!startPoint?.formatted_address ||
-			!endPoint?.formatted_address
-		) {
-			console.log('Missing required data for route calculation:', {
-				hasService: !!directionsService,
-				hasRenderer: !!directionsRenderer,
-				startPoint: startPoint?.formatted_address,
-				endPoint: endPoint?.formatted_address,
-			})
-			return
-		}
-
-		try {
-			const validWaypoints = waypoints
-				.filter(
-					(wp): wp is WaypointType =>
-						wp !== null && wp.place && wp.place.formatted_address !== undefined
-				)
-				.map((wp) => ({
-					location: wp.place.formatted_address,
-					stopover: true,
-				}))
-
-			console.log('Calculating route with waypoints:', validWaypoints)
-
-			const request: google.maps.DirectionsRequest = {
-				origin: startPoint.formatted_address,
-				destination: endPoint.formatted_address,
-				waypoints: validWaypoints,
-				travelMode: google.maps.TravelMode[travelMode],
-				optimizeWaypoints: true,
-			}
-
-			const response = await directionsService.route(request)
-			directionsRenderer.setMap(map)
-			directionsRenderer.setDirections(response)
-			setDirections(response)
-
-			if (response.routes[0].bounds) {
-				map?.fitBounds(response.routes[0].bounds)
-			}
-		} catch (error) {
-			console.error('Error calculating route:', error)
-		}
-	}
-
-	useEffect(() => {
-		calculateRoute()
-	}, [
-		directionsService,
-		directionsRenderer,
-		startPoint,
-		endPoint,
-		waypoints,
-		travelMode,
-	])
 
 	const onSubmit = async (formData: RouteFormValues) => {
 		if (
@@ -232,7 +142,6 @@ const MapContent = () => {
 					: [],
 			}
 
-			console.log('Submitting route data:', routeData)
 			createRoute(routeData)
 		} catch (error) {
 			console.error('Error preparing route data:', error)
@@ -242,7 +151,7 @@ const MapContent = () => {
 
 	return (
 		<div className='flex h-screen'>
-			<Card className='w-96 p-4 m-4 space-y-4 h-fit overflow-y-auto max-h-screen'>
+			<Card className='w-96 p-4 space-y-4 overflow-y-auto'>
 				<Form {...form}>
 					<form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
 						<FormField
@@ -269,7 +178,7 @@ const MapContent = () => {
 						{waypoints.map((_, index) => (
 							<LocationInput
 								key={index}
-								inputId={`waypoint-input-${index}`}
+								inputId={`waypoint-${index}-input`}
 								label={`Waypoint ${index + 1}`}
 								placeholder={`Enter waypoint ${index + 1}`}
 								onPlaceSelect={(place) => updateWaypoint(index, place)}
@@ -389,15 +298,12 @@ const MapContent = () => {
 			</Card>
 
 			<div className='flex-1'>
-				<Map
-					defaultCenter={{ lat: 52.52, lng: 13.405 }}
-					defaultZoom={12}
-					gestureHandling='greedy'
-					className='w-full h-full'
-					disableDefaultUI={false}
-					mapTypeControl={true}
-					zoomControl={true}
-					scaleControl={true}
+				<RouteMap
+					startPoint={startPoint}
+					endPoint={endPoint}
+					waypoints={waypoints}
+					travelMode={travelMode}
+					onDirectionsChange={setDirections}
 				/>
 			</div>
 		</div>
