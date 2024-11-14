@@ -27,12 +27,7 @@ router.post(
 			req.session.userId = user.id
 			req.session.isAdmin = user.isAdmin
 
-			res.json({
-				id: user._id,
-				name: user.name,
-				email: user.email,
-				isAdmin: user.isAdmin,
-			})
+			res.json(user)
 		} catch (error) {
 			const errorMessage =
 				error instanceof Error ? error.message : 'An unknown error occurred'
