@@ -39,17 +39,17 @@ export interface RouteResponse {
 	visibility: 'public' | 'private' | 'followers'
 	tags: string[]
 	likes: Like[]
-	comments: Array<{
+	comments: {
 		_id: string
 		content: string
 		user: {
 			_id: string
+			name: string
 			username: string
 			profilePicture?: string
-			name: string
 		}
 		createdAt: string
-	}>
+	}[]
 	createdAt: string
 	updatedAt: string
 }
@@ -115,6 +115,24 @@ export const routeApi = {
 
 	unlikeRoute: async (routeId: string, userId: string) => {
 		const response = await api.delete(`/routes/${routeId}/like/${userId}`)
+		return response.data
+	},
+
+	addComment: async (routeId: string, userId: string, content: string) => {
+		const response = await api.post(`/routes/${routeId}/comments`, {
+			userId,
+			content,
+		})
+		return response.data
+	},
+
+	removeComment: async (routeId: string, commentId: string, userId: string) => {
+		const response = await api.delete(
+			`/routes/${routeId}/comments/${commentId}`,
+			{
+				data: { userId },
+			}
+		)
 		return response.data
 	},
 }
