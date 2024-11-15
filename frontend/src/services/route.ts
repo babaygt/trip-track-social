@@ -52,6 +52,7 @@ export interface RouteResponse {
 	}[]
 	createdAt: string
 	updatedAt: string
+	bookmarks?: string[]
 }
 
 export const routeApi = {
@@ -132,6 +133,20 @@ export const routeApi = {
 			{
 				data: { userId },
 			}
+		)
+		return response.data
+	},
+
+	addBookmark: async (routeId: string, userId: string) => {
+		const response = await api.post<RouteResponse>(
+			`/users/${userId}/bookmarks/${routeId}`
+		)
+		return response.data
+	},
+
+	removeBookmark: async (routeId: string, userId: string) => {
+		const response = await api.delete<RouteResponse>(
+			`/users/${userId}/bookmarks/${routeId}`
 		)
 		return response.data
 	},
