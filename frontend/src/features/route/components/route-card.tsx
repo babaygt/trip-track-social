@@ -3,10 +3,11 @@ import { RouteResponse } from '@/services/route'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { TRAVEL_MODES } from '../types'
-import { MapPin, Heart } from 'lucide-react'
+import { MapPin, Heart, MessageSquare, Clock } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { RoutePreviewMap } from '@/components/maps/route-preview-map'
 import { useRouteLike } from '../hooks/use-route-like'
+import { useRouteStats } from '../hooks/use-route-stats'
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
@@ -16,6 +17,7 @@ interface RouteCardProps {
 
 export function RouteCard({ route }: RouteCardProps) {
 	const { isLiked, likeCount, handleLike } = useRouteLike(route)
+	const { commentCount } = useRouteStats(route)
 
 	const travelMode = TRAVEL_MODES.find(
 		(mode) => mode.value === route.travelMode
@@ -48,14 +50,31 @@ export function RouteCard({ route }: RouteCardProps) {
 						</p>
 					</div>
 				</CardHeader>
-				<CardContent className='space-y-3 pb-4'>
-					<div className='flex items-center gap-2 text-sm text-muted-foreground'>
-						<MapPin className='h-4 w-4 shrink-0' />
-						<span>{(route.totalDistance / 1000).toFixed(1)} km</span>
-						<span>•</span>
-						<span>{Math.round(route.totalTime / 60)} mins</span>
-						<span>•</span>
-						<span>{travelMode?.label}</span>
+				<CardContent className='space-y-3'>
+					<div className='flex items-center gap-4 text-sm text-muted-foreground'>
+						<div className='flex items-center gap-1'>
+							<MapPin className='h-4 w-4 shrink-0' />
+							<span>
+								{route.totalDistance >= 1000
+									? `${(route.totalDistance / 1000).toFixed(1)}km`
+									: `${Math.round(route.totalDistance)}m`}
+							</span>
+						</div>
+
+						<div className='flex items-center gap-1'>
+							<Clock className='h-4 w-4 shrink-0' />
+							<span>
+								{route.totalTime / 60 >= 60
+									? `${Math.floor(route.totalTime / 3600)}h ${Math.round(
+											(route.totalTime % 3600) / 60
+									  )}m`
+									: `${Math.round(route.totalTime / 60)}m`}
+							</span>
+						</div>
+
+						<div className='flex items-center gap-1'>
+							<span>{travelMode?.label}</span>
+						</div>
 					</div>
 					{route.description && (
 						<p className='text-sm text-muted-foreground line-clamp-2'>
@@ -76,17 +95,31 @@ export function RouteCard({ route }: RouteCardProps) {
 					)}
 				</CardContent>
 			</Link>
-			<div className='flex items-center justify-between p-4'>
-				<button
-					onClick={handleLike}
-					className={`flex items-center gap-1 text-sm ${
-						isLiked ? 'text-red-500 bg' : 'text-gray-500'
-					} hover:text-red-600 transition-colors`}
-				>
-					<Heart className='h-5 w-5' />
-					{likeCount}
-				</button>
-			</div>
+			<CardContent className='pt-0'>
+				<div className='flex items-center gap-2 text-sm text-muted-foreground'>
+					<button
+						onClick={(e) => {
+							e.stopPropagation()
+							handleLike()
+						}}
+						className='flex items-center gap-1 hover:text-primary transition-colors'
+					>
+						<Heart
+							className={`h-4 w-4 ${
+								isLiked ? 'fill-current text-red-500' : ''
+							}`}
+						/>
+						<span>{likeCount}</span>
+					</button>
+					<Link
+						to={`/routes/${route._id}`}
+						className='flex items-center gap-1 hover:text-primary transition-colors'
+					>
+						<MessageSquare className='h-4 w-4' />
+						<span>{commentCount}</span>
+					</Link>
+				</div>
+			</CardContent>
 		</Card>
 	)
 }
