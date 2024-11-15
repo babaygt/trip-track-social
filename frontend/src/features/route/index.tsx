@@ -6,6 +6,9 @@ import { RouteMap } from '@/components/maps/route-map'
 import { RouteForm } from './components/route-form'
 import { RouteFormValues } from './schemas/route-form-schema'
 import { useRouteState } from './hooks/use-route-state'
+import { useAuthStore } from '@/stores/auth-store'
+import { LogIn } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
@@ -78,6 +81,35 @@ const MapContent = () => {
 			console.error('Error preparing route data:', error)
 			toast.error('Failed to create route')
 		}
+	}
+
+	const { user } = useAuthStore()
+
+	if (!user) {
+		return (
+			<div className='min-h-[400px] flex flex-col items-center justify-center p-8 space-y-6 bg-gradient-to-b from-background to-muted rounded-lg shadow-lg'>
+				<div className='relative'>
+					<div className='absolute -inset-1 bg-gradient-to-r from-primary to-secondary blur opacity-30 rounded-lg'></div>
+					<div className='relative bg-background p-6 rounded-lg shadow-xl'>
+						<h2 className='text-2xl font-bold text-center mb-4'>
+							Authentication Required
+						</h2>
+						<p className='text-muted-foreground text-center mb-6'>
+							Please sign in to create and share your travel routes
+						</p>
+						<div className='flex justify-center'>
+							<Link
+								to='/login'
+								className='inline-flex items-center px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors'
+							>
+								<LogIn className='w-5 h-5 mr-2' />
+								Sign In
+							</Link>
+						</div>
+					</div>
+				</div>
+			</div>
+		)
 	}
 
 	return (
