@@ -7,6 +7,7 @@ config({ path: '.env.test' })
 let mongod: MongoMemoryServer
 
 beforeAll(async () => {
+	jest.setTimeout(30000)
 	mongod = await MongoMemoryServer.create()
 	const uri = mongod.getUri()
 
