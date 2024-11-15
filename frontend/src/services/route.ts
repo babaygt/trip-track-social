@@ -89,4 +89,11 @@ export const routeApi = {
 		)
 		return response.data
 	},
+
+	getRoutes: async (page = 1, limit = 12) => {
+		const response = await api.get<{ data: RouteResponse[] }>('/routes', {
+			params: { page, limit },
+		})
+		return response.data
+	},
 }
