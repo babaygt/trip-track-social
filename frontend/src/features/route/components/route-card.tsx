@@ -3,9 +3,10 @@ import { RouteResponse } from '@/services/route'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { TRAVEL_MODES } from '../types'
-import { MapPin } from 'lucide-react'
+import { MapPin, Heart } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { RoutePreviewMap } from '@/components/maps/route-preview-map'
+import { useRouteLike } from '../hooks/use-route-like'
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
@@ -14,6 +15,8 @@ interface RouteCardProps {
 }
 
 export function RouteCard({ route }: RouteCardProps) {
+	const { isLiked, likeCount, handleLike } = useRouteLike(route)
+
 	const travelMode = TRAVEL_MODES.find(
 		(mode) => mode.value === route.travelMode
 	)
@@ -73,6 +76,17 @@ export function RouteCard({ route }: RouteCardProps) {
 					)}
 				</CardContent>
 			</Link>
+			<div className='flex items-center justify-between p-4'>
+				<button
+					onClick={handleLike}
+					className={`flex items-center gap-1 text-sm ${
+						isLiked ? 'text-red-500 bg' : 'text-gray-500'
+					} hover:text-red-600 transition-colors`}
+				>
+					<Heart className='h-5 w-5' />
+					{likeCount}
+				</button>
+			</div>
 		</Card>
 	)
 }
