@@ -6,7 +6,13 @@ const Register = lazy(() => import('@/features/auth/register'))
 const Login = lazy(() => import('@/features/auth/login/'))
 const Profile = lazy(() => import('@/features/profile/page'))
 const RouteCreator = lazy(() => import('@/features/route/index'))
+const Home = lazy(() => import('@/features/home/page'))
+
 export const routes: RouteObject[] = [
+	{
+		path: '/',
+		element: <Home />,
+	},
 	{
 		path: '/register',
 		element: <Register />,
