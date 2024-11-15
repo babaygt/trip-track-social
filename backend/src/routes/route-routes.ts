@@ -122,6 +122,32 @@ router.get('/search', async (req: Request, res: Response) => {
 	}
 })
 
+// Get route by ID
+router.get('/find/:routeId', async (req: Request, res: Response) => {
+	try {
+		const route = await routeService.getRoute(req.params.routeId)
+		if (!route) {
+			return res.status(404).json({ message: 'Route not found' })
+		}
+		res.json(route)
+	} catch (error) {
+		let errorMessage = 'An unknown error occurred'
+		let statusCode = 400
+
+		if (error instanceof Error) {
+			if (error.message === 'Route not found') {
+				statusCode = 404
+				errorMessage = error.message
+			} else if (error.name === 'CastError') {
+				errorMessage = 'Invalid route ID format'
+			} else {
+				errorMessage = error.message
+			}
+		}
+		res.status(statusCode).json({ message: errorMessage })
+	}
+})
+
 // Get nearby routes
 router.get('/nearby', async (req: Request, res: Response) => {
 	try {

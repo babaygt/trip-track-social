@@ -861,4 +861,73 @@ describe('Route Routes', () => {
 			expect(response.body.limit).toBe(10)
 		})
 	})
+
+	describe('GET /routes/find/:routeId', () => {
+		let routeId: string
+		let userId: Types.ObjectId
+
+		beforeEach(async () => {
+			// Create a test user
+			const user = await User.create({
+				name: 'Test User',
+				username: 'testuser',
+				email: 'test@example.com',
+				password: 'password123',
+				bio: 'Test bio',
+			})
+			userId = user._id as Types.ObjectId
+
+			// Create a test route
+			const route = await Route.create({
+				title: 'Test Route',
+				creator: userId,
+				startPoint: { lat: 0, lng: 0 },
+				endPoint: { lat: 1, lng: 1 },
+				travelMode: 'DRIVING',
+				description: 'Test description',
+				totalDistance: 100,
+				totalTime: 3600,
+			})
+			routeId = (route._id as Types.ObjectId).toString()
+		})
+
+		afterEach(async () => {
+			await Route.deleteMany({})
+			await User.deleteMany({})
+		})
+
+		it('should return a route when given a valid route ID', async () => {
+			const response = await request(app)
+				.get(`/routes/find/${routeId}`)
+				.expect(200)
+
+			expect(response.body).toBeDefined()
+			expect(response.body._id).toBe(routeId)
+			expect(response.body.title).toBe('Test Route')
+		})
+
+		it('should return 404 when the route does not exist', async () => {
+			const nonExistentRouteId = new Types.ObjectId().toString()
+
+			const response = await request(app)
+				.get(`/routes/find/${nonExistentRouteId}`)
+				.expect(404)
+
+			expect(response.body).toEqual({
+				message: 'Route not found',
+			})
+		})
+
+		it('should return 400 for invalid route ID format', async () => {
+			const invalidRouteId = 'invalid-id'
+
+			const response = await request(app)
+				.get(`/routes/find/${invalidRouteId}`)
+				.expect(400)
+
+			expect(response.body).toEqual({
+				message: 'Invalid ID format',
+			})
+		})
+	})
 })
