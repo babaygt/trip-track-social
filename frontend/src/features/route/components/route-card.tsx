@@ -3,11 +3,12 @@ import { RouteResponse } from '@/services/route'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { TRAVEL_MODES } from '../types'
-import { MapPin, Heart, MessageSquare, Clock } from 'lucide-react'
+import { MapPin, Heart, MessageSquare, Clock, Bookmark } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { RoutePreviewMap } from '@/components/maps/route-preview-map'
 import { useRouteLike } from '../hooks/use-route-like'
 import { useRouteStats } from '../hooks/use-route-stats'
+import { useRouteBookmark } from '../hooks/use-route-bookmark'
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
@@ -17,6 +18,7 @@ interface RouteCardProps {
 
 export function RouteCard({ route }: RouteCardProps) {
 	const { isLiked, likeCount, handleLike } = useRouteLike(route)
+	const { isBookmarked, handleBookmark } = useRouteBookmark(route)
 	const { commentCount } = useRouteStats(route)
 
 	const travelMode = TRAVEL_MODES.find(
@@ -111,6 +113,21 @@ export function RouteCard({ route }: RouteCardProps) {
 						/>
 						<span>{likeCount}</span>
 					</button>
+
+					<button
+						onClick={(e) => {
+							e.stopPropagation()
+							handleBookmark()
+						}}
+						className='flex items-center gap-1 hover:text-primary transition-colors'
+					>
+						<Bookmark
+							className={`h-4 w-4 ${
+								isBookmarked ? 'fill-current text-primary' : ''
+							}`}
+						/>
+					</button>
+
 					<Link
 						to={`/routes/${route._id}`}
 						className='flex items-center gap-1 hover:text-primary transition-colors'
