@@ -5,6 +5,12 @@ export interface CreateRouteDto extends RouteData {
 	creator: string
 }
 
+export type Like =
+	| {
+			_id: string
+	  }
+	| string
+
 export interface RouteResponse {
 	_id: string
 	title: string
@@ -32,7 +38,7 @@ export interface RouteResponse {
 	totalTime: number
 	visibility: 'public' | 'private' | 'followers'
 	tags: string[]
-	likes: string[]
+	likes: Like[]
 	comments: Array<{
 		_id: string
 		content: string
@@ -99,6 +105,16 @@ export const routeApi = {
 
 	getRoute: async (routeId: string) => {
 		const response = await api.get<RouteResponse>(`/routes/find/${routeId}`)
+		return response.data
+	},
+
+	likeRoute: async (routeId: string, userId: string) => {
+		const response = await api.post(`/routes/${routeId}/like/${userId}`)
+		return response.data
+	},
+
+	unlikeRoute: async (routeId: string, userId: string) => {
+		const response = await api.delete(`/routes/${routeId}/like/${userId}`)
 		return response.data
 	},
 }
