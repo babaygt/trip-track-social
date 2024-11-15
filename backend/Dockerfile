@@ -8,6 +8,10 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 3000
+RUN npm run build
 
-CMD ["npm", "start"]
+EXPOSE 8080
+
+ENV PORT=8080
+
+CMD ["node", "dist/bin/www.js"]
