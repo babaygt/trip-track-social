@@ -1,0 +1,24 @@
+FROM node:20.18.0-alpine3.19
+
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package.json package-lock.json ./
+
+# Install dependencies
+RUN npm install
+
+# Install nodemon globally for development
+RUN npm install -g nodemon
+
+# Copy the rest of the application code
+COPY . .
+
+# Expose port 8080
+EXPOSE 8080
+
+# Set the PORT environment variable
+ENV PORT=8080
+
+# Start the application using nodemon for hot-reloading
+CMD ["nodemon", "bin/www.ts"]

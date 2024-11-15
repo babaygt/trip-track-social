@@ -1,0 +1,18 @@
+FROM node:20.18.0-alpine3.19
+
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package.json package-lock.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the rest of the application code
+COPY . .
+
+# Expose port 5173
+EXPOSE 5173
+
+# Start the development server
+CMD ["npm", "run", "dev"]
