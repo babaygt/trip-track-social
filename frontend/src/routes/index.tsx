@@ -7,6 +7,7 @@ const Login = lazy(() => import('@/features/auth/login/'))
 const Profile = lazy(() => import('@/features/profile/page'))
 const RouteCreator = lazy(() => import('@/features/route/index'))
 const Home = lazy(() => import('@/features/home/page'))
+const RoutePost = lazy(() => import('@/features/route/pages/route-post-page'))
 
 export const routes: RouteObject[] = [
 	{
@@ -32,5 +33,9 @@ export const routes: RouteObject[] = [
 	{
 		path: '/create-route',
 		element: <RouteCreator />,
+	},
+	{
+		path: '/routes/:routeId',
+		element: <RoutePost />,
 	},
 ]
