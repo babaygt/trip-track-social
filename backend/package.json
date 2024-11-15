@@ -1,12 +1,13 @@
 {
 	"name": "backend",
 	"version": "1.0.0",
-	"main": "app.ts",
+	"main": "dist/app.js",
 	"scripts": {
+		"build": "tsc",
 		"test": "jest",
 		"test:watch": "jest --watch",
 		"test:coverage": "jest --coverage",
-		"start": "ts-node bin/www.ts",
+		"start": "node dist/bin/www.js",
 		"dev": "nodemon bin/www.ts",
 		"lint": "eslint \"**/*.{js,ts}\"",
 		"lint:fix": "eslint \"**/*.{js,ts}\" --fix"
