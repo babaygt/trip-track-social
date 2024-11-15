@@ -150,4 +150,18 @@ router.get('/nearby', async (req: Request, res: Response) => {
 	}
 })
 
+// Get all routes
+router.get('/', async (req: Request, res: Response) => {
+	try {
+		const page = parseInt(req.query.page as string) || 1
+		const limit = parseInt(req.query.limit as string) || 10
+		const routes = await routeService.getRoutes(page, limit)
+		res.json(routes)
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : 'An unknown error occurred'
+		res.status(400).json({ message: errorMessage })
+	}
+})
+
 export default router

@@ -2,7 +2,7 @@ import request from 'supertest'
 import app from '../../src/app'
 import { Route, User } from '../../src/models'
 import { Types } from 'mongoose'
-import { TravelMode } from '../../src/models/route'
+import { IRoute, TravelMode } from '../../src/models/route'
 
 describe('Route Routes', () => {
 	describe('POST /routes', () => {
@@ -772,6 +772,93 @@ describe('Route Routes', () => {
 		afterEach(async () => {
 			await Route.deleteMany({})
 			await User.deleteMany({})
+		})
+	})
+
+	describe('GET /routes', () => {
+		let userId: Types.ObjectId
+
+		beforeEach(async () => {
+			// Clear the collections before each test
+			await User.deleteMany({})
+			await Route.deleteMany({})
+
+			// Create a test user
+			const user = await User.create({
+				name: 'Test User',
+				username: 'testuser',
+				email: 'test@example.com',
+				password: 'password123',
+				bio: 'Test bio',
+			})
+			userId = user._id as Types.ObjectId
+
+			// Create multiple test routes
+			const routePromises = Array.from({ length: 25 }, (_, index) =>
+				Route.create({
+					title: `Test Route ${index + 1}`,
+					creator: userId,
+					startPoint: { lat: 0, lng: 0 },
+					endPoint: { lat: 1, lng: 1 },
+					travelMode: 'DRIVING',
+					description: `Test description ${index + 1}`,
+					totalDistance: 100,
+					totalTime: 3600,
+					visibility: 'public',
+				})
+			)
+			await Promise.all(routePromises)
+		})
+
+		afterEach(async () => {
+			// Clean up after each test
+			await Route.deleteMany({})
+			await User.deleteMany({})
+		})
+
+		it('should return all routes with default pagination', async () => {
+			const response = await request(app).get('/routes').expect(200)
+
+			expect(response.body).toBeDefined()
+			expect(response.body.data).toHaveLength(10) // Default limit is 10
+			expect(response.body.page).toBe(1)
+			expect(response.body.limit).toBe(10)
+
+			// Verify only public routes are returned
+			response.body.data.forEach((route: IRoute) => {
+				expect(route.visibility).toBe('public')
+			})
+		})
+
+		it('should return correct page of results', async () => {
+			const responsePage1 = await request(app)
+				.get('/routes?page=1&limit=5')
+				.expect(200)
+			const responsePage2 = await request(app)
+				.get('/routes?page=2&limit=5')
+				.expect(200)
+
+			expect(responsePage1.body.data).toHaveLength(5)
+			expect(responsePage2.body.data).toHaveLength(5)
+
+			// Verify different routes are returned
+			const page1Ids = responsePage1.body.data.map((route: IRoute) =>
+				(route as { _id: Types.ObjectId })._id.toString()
+			)
+			const page2Ids = responsePage2.body.data.map((route: IRoute) =>
+				(route as { _id: Types.ObjectId })._id.toString()
+			)
+			expect(page1Ids).not.toEqual(page2Ids)
+		})
+
+		it('should return empty array when page exceeds available routes', async () => {
+			const response = await request(app)
+				.get('/routes?page=100&limit=10')
+				.expect(200)
+
+			expect(response.body.data).toHaveLength(0)
+			expect(response.body.page).toBe(100)
+			expect(response.body.limit).toBe(10)
 		})
 	})
 })
