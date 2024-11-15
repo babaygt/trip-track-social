@@ -96,4 +96,9 @@ export const routeApi = {
 		})
 		return response.data
 	},
+
+	getRoute: async (routeId: string) => {
+		const response = await api.get<RouteResponse>(`/routes/find/${routeId}`)
+		return response.data
+	},
 }
