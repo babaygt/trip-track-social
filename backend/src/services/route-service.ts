@@ -167,4 +167,12 @@ export class RouteService extends BaseService<IRoute> {
 			limit,
 		}
 	}
+
+	async getRoute(routeId: string): Promise<IRoute> {
+		const route = await this.findById(routeId)
+		if (!route) {
+			throw new Error('Route not found')
+		}
+		return route
+	}
 }

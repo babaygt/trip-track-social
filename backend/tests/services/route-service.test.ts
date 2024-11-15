@@ -655,3 +655,63 @@ describe('RouteService', () => {
 		})
 	})
 })
+
+describe('RouteService - getRoute', () => {
+	let routeService: RouteService
+	let userId: Types.ObjectId
+	let routeId: string
+
+	beforeEach(async () => {
+		routeService = new RouteService()
+
+		// Create a test user
+		const user = await User.create({
+			name: 'Test User',
+			username: 'testuser',
+			email: 'test@example.com',
+			password: 'password123',
+			bio: 'Test bio',
+		})
+		userId = user._id as Types.ObjectId
+
+		// Create a test route
+		const route = await Route.create({
+			title: 'Test Route',
+			creator: userId,
+			startPoint: { lat: 0, lng: 0 },
+			endPoint: { lat: 1, lng: 1 },
+			travelMode: 'DRIVING',
+			description: 'Test description',
+			totalDistance: 100,
+			totalTime: 3600,
+		})
+		routeId = (route._id as Types.ObjectId).toString()
+	})
+
+	afterEach(async () => {
+		await Route.deleteMany({})
+		await User.deleteMany({})
+	})
+
+	it('should return a route when given a valid route ID', async () => {
+		const route = await routeService.getRoute(routeId)
+
+		expect(route).toBeDefined()
+		expect((route as { _id: Types.ObjectId })._id.toString()).toBe(routeId)
+		expect(route.title).toBe('Test Route')
+	})
+
+	it('should throw an error when the route does not exist', async () => {
+		const nonExistentRouteId = new Types.ObjectId().toString()
+
+		await expect(routeService.getRoute(nonExistentRouteId)).rejects.toThrow(
+			'Route not found'
+		)
+	})
+
+	it('should throw an error for invalid route ID format', async () => {
+		const invalidRouteId = 'invalid-id'
+
+		await expect(routeService.getRoute(invalidRouteId)).rejects.toThrow()
+	})
+})
