@@ -152,4 +152,19 @@ export class RouteService extends BaseService<IRoute> {
 			{ sort: { createdAt: -1 } }
 		)
 	}
+
+	async getRoutes(page: number, limit: number) {
+		const skip = (page - 1) * limit
+
+		const routes = await Route.find({ visibility: 'public' })
+			.sort({ createdAt: -1 })
+			.skip(skip)
+			.limit(limit)
+
+		return {
+			data: routes,
+			page,
+			limit,
+		}
+	}
 }

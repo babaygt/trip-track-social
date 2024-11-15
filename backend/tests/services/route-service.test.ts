@@ -1,6 +1,6 @@
 import { RouteService } from '../../src/services/route-service'
 import { Types } from 'mongoose'
-import { TravelMode } from '../../src/models/route'
+import { Route, TravelMode } from '../../src/models/route'
 import { User } from '../../src/models'
 
 describe('RouteService', () => {
@@ -540,6 +540,118 @@ describe('RouteService', () => {
 			).not.toBe(
 				(routesPage2.data as { _id: Types.ObjectId }[])[0]._id.toString()
 			)
+		})
+	})
+
+	describe('RouteService', () => {
+		let routeService: RouteService
+		let userId: Types.ObjectId
+
+		describe('getRoutes', () => {
+			beforeEach(async () => {
+				// Clear the collections before each test
+				await User.deleteMany({})
+				await Route.deleteMany({})
+
+				routeService = new RouteService()
+
+				// Create a test user
+				const user = await User.create({
+					name: 'Test User',
+					username: `testuser_${Date.now()}`, // Ensure unique username
+					email: `testuser_${Date.now()}@example.com`, // Ensure unique email
+					password: 'password123',
+					bio: 'Test bio',
+				})
+				userId = user._id as Types.ObjectId
+
+				// Create multiple test routes
+				const routePromises = Array.from({ length: 25 }, (_, index) =>
+					Route.create({
+						title: `Test Route ${index + 1}`,
+						creator: userId,
+						startPoint: { lat: 0, lng: 0 },
+						endPoint: { lat: 1, lng: 1 },
+						travelMode: 'DRIVING' as TravelMode,
+						description: `Test description ${index + 1}`,
+						totalDistance: 100,
+						totalTime: 3600,
+						visibility: index < 20 ? 'public' : 'private', // Make some routes private
+					})
+				)
+				await Promise.all(routePromises)
+			})
+
+			afterEach(async () => {
+				// Clean up after each test
+				await Route.deleteMany({})
+				await User.deleteMany({})
+			})
+
+			it('should return public routes with default pagination', async () => {
+				const result = await routeService.getRoutes(1, 10)
+
+				// Optional: Log the result for debugging
+				// console.log(result.data);
+
+				expect(result.data).toHaveLength(10)
+				expect(result.page).toBe(1)
+				expect(result.limit).toBe(10)
+
+				// Verify only public routes are returned
+				result.data.forEach((route) => {
+					expect(route.visibility).toBe('public')
+				})
+
+				// Verify creator population
+				result.data.forEach((route) => {
+					expect(route.creator).toHaveProperty('username')
+					expect(route.creator).toHaveProperty('name')
+					expect(route.creator).toHaveProperty('profilePicture')
+				})
+			})
+
+			it('should return correct page of results', async () => {
+				const page1 = await routeService.getRoutes(1, 5)
+				const page2 = await routeService.getRoutes(2, 5)
+
+				expect(page1.data).toHaveLength(5)
+				expect(page2.data).toHaveLength(5)
+
+				// Verify different routes are returned
+				const page1Ids = page1.data.map((route) =>
+					(route as { _id: Types.ObjectId })._id.toString()
+				)
+				const page2Ids = page2.data.map((route) =>
+					(route as { _id: Types.ObjectId })._id.toString()
+				)
+				expect(page1Ids).not.toEqual(page2Ids)
+			})
+
+			it('should return empty array when page exceeds available routes', async () => {
+				const result = await routeService.getRoutes(100, 10)
+
+				expect(result.data).toHaveLength(0)
+				expect(result.page).toBe(100)
+				expect(result.limit).toBe(10)
+			})
+
+			it('should sort routes by createdAt in descending order', async () => {
+				const result = await routeService.getRoutes(1, 10)
+
+				const dates = result.data.map((route) =>
+					new Date(route.createdAt).getTime()
+				)
+				const sortedDates = [...dates].sort((a, b) => b - a)
+
+				expect(dates).toEqual(sortedDates)
+			})
+		})
+
+		// Ensure global cleanup if necessary
+		afterAll(async () => {
+			await Route.deleteMany({})
+			await User.deleteMany({})
 		})
 	})
 })
