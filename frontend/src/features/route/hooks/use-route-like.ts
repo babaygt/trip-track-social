@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useAuthStore } from '@/stores/auth-store'
 import { routeApi } from '@/services/route'
 import toast from 'react-hot-toast'
 import { RouteResponse, Like } from '@/services/route'
+import { useQueryClient } from '@tanstack/react-query'
 
 export function useRouteLike(route: RouteResponse) {
 	const { user } = useAuthStore()
+	const queryClient = useQueryClient()
+	const isUpdatingRef = useRef(false)
 	const [isLiked, setIsLiked] = useState(() => {
 		if (!user) return false
 		return route.likes.some((likeId: Like) => {
@@ -24,21 +27,40 @@ export function useRouteLike(route: RouteResponse) {
 			return
 		}
 
+		// Prevent multiple rapid clicks
+		if (isUpdatingRef.current) {
+			return
+		}
+		isUpdatingRef.current = true
+
+		// Optimistically update UI and show toast immediately
+		const previousIsLiked = isLiked
+		const previousLikeCount = likeCount
+		const newIsLiked = !isLiked
+		setIsLiked(newIsLiked)
+		setLikeCount(newIsLiked ? likeCount + 1 : likeCount - 1)
+		toast.success(
+			newIsLiked ? 'Route liked successfully' : 'Route unliked successfully'
+		)
+
 		try {
-			let updatedRoute
-			if (isLiked) {
-				updatedRoute = await routeApi.unlikeRoute(route._id, user._id)
-				setIsLiked(false)
-				toast.success('Route unliked successfully')
-			} else {
-				updatedRoute = await routeApi.likeRoute(route._id, user._id)
-				setIsLiked(true)
-				toast.success('Route liked successfully')
-			}
-			setLikeCount(updatedRoute.likes.length)
+			const updatedRoute = newIsLiked
+				? await routeApi.likeRoute(route._id, user._id)
+				: await routeApi.unlikeRoute(route._id, user._id)
+
+			// Update cache
+			queryClient.setQueryData(['route', route._id], updatedRoute)
 		} catch (error) {
+			// Revert optimistic update on error
+			setIsLiked(previousIsLiked)
+			setLikeCount(previousLikeCount)
 			console.error('Like error:', error)
 			toast.error('Failed to update like status')
+		} finally {
+			// Allow next update after a small delay
+			setTimeout(() => {
+				isUpdatingRef.current = false
+			}, 300)
 		}
 	}
 
