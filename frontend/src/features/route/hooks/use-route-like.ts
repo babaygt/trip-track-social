@@ -10,7 +10,7 @@ export function useRouteLike(route: RouteResponse) {
 	const queryClient = useQueryClient()
 	const isUpdatingRef = useRef(false)
 	const [isLiked, setIsLiked] = useState(() => {
-		if (!user) return false
+		if (!user || !route?.likes) return false
 		return route.likes.some((likeId: Like) => {
 			const likeIdStr =
 				typeof likeId === 'object' && '_id' in likeId
@@ -19,11 +19,15 @@ export function useRouteLike(route: RouteResponse) {
 			return likeIdStr === user._id
 		})
 	})
-	const [likeCount, setLikeCount] = useState(route.likes.length)
+	const [likeCount, setLikeCount] = useState(route?.likes?.length || 0)
 
 	const handleLike = async () => {
 		if (!user) {
 			toast.error('You must be logged in to like a route')
+			return
+		}
+
+		if (!route) {
 			return
 		}
 
