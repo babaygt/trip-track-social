@@ -1,4 +1,5 @@
 import { api } from '@/lib/axios'
+import { AxiosError } from 'axios'
 
 interface RegisterData {
 	name: string
@@ -15,20 +16,41 @@ interface LoginCredentials {
 
 export const authApi = {
 	register: async (userData: RegisterData) => {
-		const response = await api.post('/users', {
-			...userData,
-			bio: userData.bio || '',
-		})
-		return response.data
+		try {
+			const response = await api.post('/users', {
+				...userData,
+				bio: userData.bio || '',
+			})
+			return response.data
+		} catch (error) {
+			if (error instanceof AxiosError && error.response?.data) {
+				throw new Error(error.response.data.message || 'Registration failed')
+			}
+			throw new Error('An unexpected error occurred')
+		}
 	},
 
 	login: async (credentials: LoginCredentials) => {
-		const response = await api.post('/auth/login', credentials)
-		return response.data
+		try {
+			const response = await api.post('/auth/login', credentials)
+			return response.data
+		} catch (error) {
+			if (error instanceof AxiosError && error.response?.data) {
+				throw new Error(error.response.data.message || 'Login failed')
+			}
+			throw new Error('An unexpected error occurred')
+		}
 	},
 
 	logout: async () => {
-		const response = await api.post('/auth/logout')
-		return response.data
+		try {
+			const response = await api.post('/auth/logout')
+			return response.data
+		} catch (error) {
+			if (error instanceof AxiosError && error.response?.data) {
+				throw new Error(error.response.data.message || 'Logout failed')
+			}
+			throw new Error('An unexpected error occurred')
+		}
 	},
 }
