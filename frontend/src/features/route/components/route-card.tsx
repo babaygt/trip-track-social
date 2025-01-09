@@ -21,6 +21,10 @@ export function RouteCard({ route }: RouteCardProps) {
 	const { isBookmarked, handleBookmark } = useRouteBookmark(route)
 	const { commentCount } = useRouteStats(route)
 
+	if (!route || !route.creator) {
+		return null
+	}
+
 	const travelMode = TRAVEL_MODES.find(
 		(mode) => mode.value === route.travelMode
 	)
@@ -40,15 +44,15 @@ export function RouteCard({ route }: RouteCardProps) {
 				</div>
 				<CardHeader className='flex flex-row items-center gap-4 pt-4'>
 					<Avatar className='h-10 w-10'>
-						<AvatarImage src={route.creator.profilePicture} />
-						<AvatarFallback>{route.creator.name[0]}</AvatarFallback>
+						<AvatarImage src={route.creator?.profilePicture} />
+						<AvatarFallback>{route.creator?.name?.[0] || '?'}</AvatarFallback>
 					</Avatar>
 					<div className='flex-1'>
 						<h3 className='font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors'>
 							{route.title}
 						</h3>
 						<p className='text-sm text-muted-foreground'>
-							by {route.creator.name}
+							by {route.creator?.name}
 						</p>
 					</div>
 				</CardHeader>
@@ -83,7 +87,7 @@ export function RouteCard({ route }: RouteCardProps) {
 							{route.description}
 						</p>
 					)}
-					{route.tags.length > 0 && (
+					{route.tags?.length > 0 && (
 						<div className='flex flex-wrap gap-1.5'>
 							{route.tags.map((tag) => (
 								<span
