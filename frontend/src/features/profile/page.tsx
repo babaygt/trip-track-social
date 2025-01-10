@@ -38,7 +38,7 @@ export default function ProfilePage() {
 	return (
 		<div className='flex flex-col items-center gap-8 p-4'>
 			<Card className='w-full max-w-xl bg-background'>
-				<ProfileHeader user={user} isOwnProfile={isOwnProfile} />
+				<ProfileHeader user={user} />
 				<ProfileInfo user={user} />
 				<ProfileStats user={user} />
 			</Card>

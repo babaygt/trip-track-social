@@ -1,17 +1,22 @@
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { getInitials } from '@/lib/utils'
-import type { User } from '@/stores/auth-store'
+import { useAuthStore, User } from '@/stores/auth-store'
+import { useUserFollow } from '../hooks/use-user-follow'
 
 interface ProfileHeaderProps {
 	user: User
-	isOwnProfile: boolean
 }
 
-export function ProfileHeader({ user, isOwnProfile }: ProfileHeaderProps) {
+export function ProfileHeader({ user }: ProfileHeaderProps) {
+	const { user: currentUser } = useAuthStore()
+	const { isFollowing, handleFollow } = useUserFollow(user)
+
+	const isOwnProfile = currentUser?._id === user._id
+
 	return (
-		<div className='p-4'>
-			<div className='flex justify-between items-start mb-4'>
+		<div className='flex items-center justify-between p-4'>
+			<div className='flex items-center gap-4'>
 				<Avatar className='h-20 w-20'>
 					{user.profilePicture ? (
 						<AvatarImage src={user.profilePicture} alt={user.name} />
@@ -21,20 +26,26 @@ export function ProfileHeader({ user, isOwnProfile }: ProfileHeaderProps) {
 						</AvatarFallback>
 					)}
 				</Avatar>
-				{isOwnProfile ? (
-					<Button variant='outline' size='sm'>
-						Edit profile
-					</Button>
-				) : (
-					<Button variant='outline' size='sm'>
-						Follow
-					</Button>
-				)}
+				<div>
+					<h1 className='text-2xl font-bold'>{user.name}</h1>
+					<p className='text-sm text-muted-foreground'>@{user.username}</p>
+				</div>
 			</div>
-			<div className='space-y-1'>
-				<h1 className='text-xl font-bold'>{user.name}</h1>
-				<p className='text-sm text-muted-foreground'>@{user.username}</p>
-			</div>
+			{isOwnProfile ? (
+				<Button variant='outline' size='sm'>
+					Edit profile
+				</Button>
+			) : (
+				currentUser && (
+					<Button
+						variant={isFollowing ? 'outline' : 'default'}
+						size='sm'
+						onClick={handleFollow}
+					>
+						{isFollowing ? 'Unfollow' : 'Follow'}
+					</Button>
+				)
+			)}
 		</div>
 	)
 }
