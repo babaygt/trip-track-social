@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card'
 import { ProfileHeader } from './components/profile-header'
 import { ProfileInfo } from './components/profile-info'
 import { ProfileStats } from './components/profile-stats'
-import { ProfileRoutes } from './components/profile-routes'
+import { ProfileContent } from './components/profile-content'
 import { Navigate } from 'react-router-dom'
 
 export default function ProfilePage() {
@@ -43,10 +43,7 @@ export default function ProfilePage() {
 				<ProfileStats user={user} />
 			</Card>
 
-			<div className='w-full max-w-4xl'>
-				<h2 className='text-2xl font-semibold mb-6'>Routes</h2>
-				<ProfileRoutes user={user} />
-			</div>
+			<ProfileContent user={user} />
 		</div>
 	)
 }

@@ -71,6 +71,26 @@ export const routeApi = {
 		return response.data
 	},
 
+	getLikedRoutes: async (userId: string, page = 1, limit = 12) => {
+		const response = await api.get<{ data: RouteResponse[] }>(
+			`/users/${userId}/liked-routes`,
+			{
+				params: { page, limit },
+			}
+		)
+		return response.data
+	},
+
+	getBookmarkedRoutes: async (userId: string, page = 1, limit = 12) => {
+		const response = await api.get<{ data: RouteResponse[] }>(
+			`/users/${userId}/bookmarked-routes`,
+			{
+				params: { page, limit },
+			}
+		)
+		return response.data
+	},
+
 	searchRoutes: async (query: string, page = 1, limit = 10) => {
 		const response = await api.get<{ data: RouteResponse[] }>(
 			'/routes/search',
