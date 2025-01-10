@@ -68,20 +68,12 @@ const UserSchema = new Schema<IUser>(
 			{
 				type: Schema.Types.ObjectId,
 				ref: 'User',
-				autopopulate: {
-					select: 'username profilePicture name',
-					maxDepth: 1,
-				},
 			},
 		],
 		following: [
 			{
 				type: Schema.Types.ObjectId,
 				ref: 'User',
-				autopopulate: {
-					select: 'username profilePicture name',
-					maxDepth: 1,
-				},
 			},
 		],
 		bookmarks: [
