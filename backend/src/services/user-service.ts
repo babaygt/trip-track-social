@@ -120,7 +120,10 @@ export class UserService extends BaseService<IUser> {
 		if (!user) {
 			throw new Error('User not found')
 		}
-		return this.findAll({ _id: { $in: user.followers } })
+		return this.findAll(
+			{ _id: { $in: user.followers } },
+			{ projection: { username: 1, profilePicture: 1, name: 1 } }
+		)
 	}
 
 	async getFollowing(userId: string): Promise<IUser[]> {
@@ -128,7 +131,10 @@ export class UserService extends BaseService<IUser> {
 		if (!user) {
 			throw new Error('User not found')
 		}
-		const following = await this.findAll({ _id: { $in: user.following } })
+		const following = await this.findAll(
+			{ _id: { $in: user.following } },
+			{ projection: { username: 1, profilePicture: 1, name: 1 } }
+		)
 		if (!following) throw new Error('Failed to fetch following users')
 		return following!
 	}
@@ -187,6 +193,21 @@ export class UserService extends BaseService<IUser> {
 		if (!username) {
 			throw new Error('Username is required')
 		}
-		return this.findOne({ username })
+		const user = await this.findOne({ username })
+		if (!user) return null
+
+		// Populate following and followers with minimal data
+		await user.populate([
+			{
+				path: 'following',
+				select: 'username profilePicture name',
+			},
+			{
+				path: 'followers',
+				select: 'username profilePicture name',
+			},
+		])
+
+		return user
 	}
 }
