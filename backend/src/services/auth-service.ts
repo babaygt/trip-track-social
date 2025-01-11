@@ -2,6 +2,13 @@ import { UserService } from './user-service'
 import { IUser } from '../models'
 import { Types } from 'mongoose'
 
+export class AuthError extends Error {
+	constructor(message: string) {
+		super(message)
+		this.name = 'AuthError'
+	}
+}
+
 export class AuthService {
 	private userService: UserService
 
@@ -10,32 +17,45 @@ export class AuthService {
 	}
 
 	async login(email: string, password: string): Promise<IUser> {
-		const user = await this.userService.findOne({ email })
+		if (!email || !password) {
+			throw new AuthError('Email and password are required')
+		}
+
+		const user = await this.userService.findOne(
+			{ email },
+			{ password: 1, email: 1, username: 1, name: 1 }
+		)
+
 		if (!user) {
-			throw new Error('Invalid credentials')
+			throw new AuthError('Invalid credentials')
 		}
 
 		const isValidPassword = await this.userService.verifyPassword(
 			user.id,
 			password
 		)
+
 		if (!isValidPassword) {
-			throw new Error('Invalid credentials')
+			throw new AuthError('Invalid credentials')
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		const { password: _pwd, ...userWithoutPassword } = user.toObject()
-		return userWithoutPassword as IUser
+		// Get full user data without password
+		const fullUser = await this.userService.findById(user.id)
+		if (!fullUser) {
+			throw new AuthError('User not found')
+		}
+
+		return fullUser
 	}
 
 	async validateSession(userId: string): Promise<IUser> {
-		if (!Types.ObjectId.isValid(userId)) {
-			throw new Error('Invalid session')
+		if (!userId || !Types.ObjectId.isValid(userId)) {
+			throw new AuthError('Invalid session')
 		}
 
 		const user = await this.userService.findById(userId)
 		if (!user) {
-			throw new Error('Invalid session')
+			throw new AuthError('Invalid session')
 		}
 
 		return user

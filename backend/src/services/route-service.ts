@@ -1,10 +1,40 @@
 import { BaseService } from './base-service'
 import { IRoute, Route } from '../models'
-import { Types } from 'mongoose'
+import { Types, ProjectionType } from 'mongoose'
+
+export class RouteError extends Error {
+	constructor(message: string) {
+		super(message)
+		this.name = 'RouteError'
+	}
+}
 
 export class RouteService extends BaseService<IRoute> {
 	constructor() {
 		super(Route)
+	}
+
+	protected getDefaultProjection(): ProjectionType<IRoute> {
+		return {
+			__v: 0,
+		}
+	}
+
+	protected getListProjection(): ProjectionType<IRoute> {
+		return {
+			title: 1,
+			creator: 1,
+			startPoint: 1,
+			endPoint: 1,
+			travelMode: 1,
+			totalDistance: 1,
+			totalTime: 1,
+			likes: 1,
+			commentCount: 1,
+			likeCount: 1,
+			visibility: 1,
+			createdAt: 1,
+		}
 	}
 
 	async createRoute(routeData: Partial<IRoute>): Promise<IRoute> {
@@ -12,38 +42,52 @@ export class RouteService extends BaseService<IRoute> {
 	}
 
 	async likeRoute(routeId: string, userId: string): Promise<IRoute> {
+		if (!Types.ObjectId.isValid(routeId)) {
+			throw new RouteError('Invalid route ID')
+		}
+
 		const route = await this.findById(routeId)
 		if (!route) {
-			throw new Error('Route not found')
+			throw new RouteError('Route not found')
 		}
 
 		if (route.isLikedBy(userId)) {
-			throw new Error('Route already liked')
+			throw new RouteError('Route already liked')
 		}
 
 		const updatedRoute = await this.update(routeId, {
-			$push: { likes: userId },
+			$addToSet: { likes: new Types.ObjectId(userId) },
 		})
 
-		if (!updatedRoute) throw new Error('Failed to like route')
+		if (!updatedRoute) {
+			throw new RouteError('Failed to like route')
+		}
+
 		return updatedRoute
 	}
 
 	async unlikeRoute(routeId: string, userId: string): Promise<IRoute> {
+		if (!Types.ObjectId.isValid(routeId)) {
+			throw new RouteError('Invalid route ID')
+		}
+
 		const route = await this.findById(routeId)
 		if (!route) {
-			throw new Error('Route not found')
+			throw new RouteError('Route not found')
 		}
 
 		if (!route.isLikedBy(userId)) {
-			throw new Error('Route not liked')
+			throw new RouteError('Route not liked')
 		}
 
 		const updatedRoute = await this.update(routeId, {
-			$pull: { likes: userId },
+			$pull: { likes: new Types.ObjectId(userId) },
 		})
 
-		if (!updatedRoute) throw new Error('Failed to unlike route')
+		if (!updatedRoute) {
+			throw new RouteError('Failed to unlike route')
+		}
+
 		return updatedRoute
 	}
 
@@ -52,22 +96,53 @@ export class RouteService extends BaseService<IRoute> {
 		userId: string,
 		content: string
 	): Promise<IRoute> {
+		if (!Types.ObjectId.isValid(routeId)) {
+			throw new RouteError('Invalid route ID')
+		}
+
+		if (!content.trim()) {
+			throw new RouteError('Comment content is required')
+		}
+
 		const route = await this.findById(routeId)
 		if (!route) {
-			throw new Error('Route not found')
+			throw new RouteError('Route not found')
 		}
 
 		const comment = {
+			_id: new Types.ObjectId(),
 			user: new Types.ObjectId(userId),
-			content,
+			content: content.trim(),
 			createdAt: new Date(),
 		}
 
-		const updatedRoute = await this.update(routeId, {
-			$push: { comments: comment },
-		})
+		const updatedRoute = await this.model
+			.findByIdAndUpdate(
+				routeId,
+				{ $push: { comments: { $each: [comment], $position: 0 } } },
+				{ new: true }
+			)
+			.populate({
+				path: 'creator',
+				select: 'name username profilePicture',
+				model: 'User',
+			})
+			.populate({
+				path: 'likes',
+				select: 'name username profilePicture',
+				model: 'User',
+			})
+			.populate({
+				path: 'comments.user',
+				select: 'name username profilePicture',
+				model: 'User',
+			})
+			.exec()
 
-		if (!updatedRoute) throw new Error('Failed to add comment')
+		if (!updatedRoute) {
+			throw new RouteError('Failed to add comment')
+		}
+
 		return updatedRoute
 	}
 
@@ -76,42 +151,86 @@ export class RouteService extends BaseService<IRoute> {
 		commentId: string,
 		userId: string
 	): Promise<IRoute> {
+		if (!Types.ObjectId.isValid(routeId)) {
+			throw new RouteError('Invalid route ID')
+		}
+
+		if (!Types.ObjectId.isValid(commentId)) {
+			throw new RouteError('Invalid comment ID')
+		}
+
 		const route = await this.findById(routeId)
 		if (!route) {
-			throw new Error('Route not found')
+			throw new RouteError('Route not found')
 		}
 
 		const comment = route.comments.find((c) => c._id?.toString() === commentId)
 		if (!comment) {
-			throw new Error('Comment not found')
+			throw new RouteError('Comment not found')
 		}
 
 		if (!comment.isOwner(userId)) {
-			throw new Error('Not authorized to remove this comment')
+			throw new RouteError('Not authorized to remove this comment')
 		}
 
-		const updatedRoute = await this.update(routeId, {
-			$pull: { comments: { _id: new Types.ObjectId(commentId) } },
-		})
+		const updatedRoute = await this.model
+			.findByIdAndUpdate(
+				routeId,
+				{ $pull: { comments: { _id: new Types.ObjectId(commentId) } } },
+				{ new: true }
+			)
+			.populate({
+				path: 'creator',
+				select: 'name username profilePicture',
+				model: 'User',
+			})
+			.populate({
+				path: 'likes',
+				select: 'name username profilePicture',
+				model: 'User',
+			})
+			.populate({
+				path: 'comments.user',
+				select: 'name username profilePicture',
+				model: 'User',
+			})
+			.exec()
 
-		if (!updatedRoute) throw new Error('Failed to remove comment')
+		if (!updatedRoute) {
+			throw new RouteError('Failed to remove comment')
+		}
+
 		return updatedRoute
 	}
 
-	async getRoutesByUser(userId: string, page: number = 1, limit: number = 10) {
-		return this.findWithPagination({ creator: userId }, page, limit, {
-			sort: { createdAt: -1 },
-		})
+	async getRoutesByUser(userId: string, page = 1, limit = 10) {
+		if (!Types.ObjectId.isValid(userId)) {
+			throw new RouteError('Invalid user ID')
+		}
+
+		return this.findWithPagination(
+			{ creator: new Types.ObjectId(userId) },
+			page,
+			limit,
+			{
+				sort: { createdAt: -1 },
+			}
+		)
 	}
 
-	async searchRoutes(query: string, page: number = 1, limit: number = 10) {
-		const searchRegex = new RegExp(query, 'i')
+	async searchRoutes(query: string, page = 1, limit = 10) {
+		const searchRegex = new RegExp(query.trim(), 'i')
 		return this.findWithPagination(
 			{
-				$or: [
-					{ title: searchRegex },
-					{ description: searchRegex },
-					{ tags: searchRegex },
+				$and: [
+					{ visibility: 'public' },
+					{
+						$or: [
+							{ title: searchRegex },
+							{ description: searchRegex },
+							{ tags: searchRegex },
+						],
+					},
 				],
 			},
 			page,
@@ -123,27 +242,32 @@ export class RouteService extends BaseService<IRoute> {
 	async getNearbyRoutes(
 		lat: number,
 		lng: number,
-		radiusKm: number = 10,
-		page: number = 1,
-		limit: number = 10
+		radiusKm = 10,
+		page = 1,
+		limit = 10
 	) {
 		const earthRadiusKm = 6371
 		return this.findWithPagination(
 			{
-				$or: [
+				$and: [
+					{ visibility: 'public' },
 					{
-						startPoint: {
-							$geoWithin: {
-								$centerSphere: [[lng, lat], radiusKm / earthRadiusKm],
+						$or: [
+							{
+								startPoint: {
+									$geoWithin: {
+										$centerSphere: [[lng, lat], radiusKm / earthRadiusKm],
+									},
+								},
 							},
-						},
-					},
-					{
-						endPoint: {
-							$geoWithin: {
-								$centerSphere: [[lng, lat], radiusKm / earthRadiusKm],
+							{
+								endPoint: {
+									$geoWithin: {
+										$centerSphere: [[lng, lat], radiusKm / earthRadiusKm],
+									},
+								},
 							},
-						},
+						],
 					},
 				],
 			},
@@ -153,26 +277,40 @@ export class RouteService extends BaseService<IRoute> {
 		)
 	}
 
-	async getRoutes(page: number, limit: number) {
-		const skip = (page - 1) * limit
-
-		const routes = await Route.find({ visibility: 'public' })
-			.sort({ createdAt: -1 })
-			.skip(skip)
-			.limit(limit)
-
-		return {
-			data: routes,
-			page,
-			limit,
-		}
+	async getPublicRoutes(page = 1, limit = 10) {
+		return this.findWithPagination({ visibility: 'public' }, page, limit, {
+			sort: { createdAt: -1 },
+		})
 	}
 
 	async getRoute(routeId: string): Promise<IRoute> {
-		const route = await this.findById(routeId)
-		if (!route) {
-			throw new Error('Route not found')
+		if (!Types.ObjectId.isValid(routeId)) {
+			throw new RouteError('Invalid route ID')
 		}
+
+		const route = await this.model
+			.findById(routeId)
+			.populate({
+				path: 'creator',
+				select: 'name username profilePicture',
+				model: 'User',
+			})
+			.populate({
+				path: 'likes',
+				select: 'name username profilePicture',
+				model: 'User',
+			})
+			.populate({
+				path: 'comments.user',
+				select: 'name username profilePicture',
+				model: 'User',
+			})
+			.exec()
+
+		if (!route) {
+			throw new RouteError('Route not found')
+		}
+
 		return route
 	}
 }

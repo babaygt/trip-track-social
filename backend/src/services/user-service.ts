@@ -1,11 +1,30 @@
 import { BaseService } from './base-service'
 import { IUser, User } from '../models'
 import bcrypt from 'bcrypt'
-import { Types } from 'mongoose'
+import { Types, ProjectionType } from 'mongoose'
 
 export class UserService extends BaseService<IUser> {
 	constructor() {
 		super(User)
+	}
+
+	protected getDefaultProjection(): ProjectionType<IUser> {
+		return {
+			password: 0,
+			__v: 0,
+		}
+	}
+
+	protected getPublicProfileProjection(): ProjectionType<IUser> {
+		return {
+			username: 1,
+			name: 1,
+			profilePicture: 1,
+			bio: 1,
+			followers: 1,
+			following: 1,
+			createdAt: 1,
+		}
 	}
 
 	async createUser(userData: Partial<IUser>): Promise<IUser> {
@@ -21,7 +40,7 @@ export class UserService extends BaseService<IUser> {
 	}
 
 	async verifyPassword(userId: string, password: string): Promise<boolean> {
-		const user = await this.findById(userId)
+		const user = await this.model.findById(userId).select('+password').exec()
 		if (!user) {
 			throw new Error('User not found')
 		}
@@ -33,7 +52,7 @@ export class UserService extends BaseService<IUser> {
 		oldPassword: string,
 		newPassword: string
 	): Promise<IUser> {
-		const user = await this.findById(userId)
+		const user = await this.model.findById(userId).select('+password').exec()
 		if (!user) {
 			throw new Error('User not found')
 		}
@@ -45,7 +64,9 @@ export class UserService extends BaseService<IUser> {
 
 		const hashedPassword = await bcrypt.hash(newPassword, 10)
 		const updatedUser = await this.update(userId, { password: hashedPassword })
-		if (!updatedUser) throw new Error('Failed to update password')
+		if (!updatedUser) {
+			throw new Error('Failed to update password')
+		}
 		return updatedUser
 	}
 
@@ -63,23 +84,16 @@ export class UserService extends BaseService<IUser> {
 			throw new Error('User not found')
 		}
 
-		const isAlreadyFollowing = user.following.some(
-			(followedUser) =>
-				followedUser._id?.toString() === targetUserId ||
-				followedUser.toString() === targetUserId
-		)
-		if (isAlreadyFollowing) {
+		if (user.following.includes(new Types.ObjectId(targetUserId))) {
 			throw new Error('Already following this user')
 		}
 
-		await Promise.all([
-			this.update(userId, { $push: { following: targetUserId } }),
-			this.update(targetUserId, { $push: { followers: userId } }),
-		])
+		user.following.push(new Types.ObjectId(targetUserId))
+		targetUser.followers.push(new Types.ObjectId(userId))
 
-		const updatedUser = await this.findById(userId)
-		if (!updatedUser) throw new Error('Failed to follow user')
-		return updatedUser
+		await Promise.all([user.save(), targetUser.save()])
+
+		return user
 	}
 
 	async unfollowUser(userId: string, targetUserId: string): Promise<IUser> {
@@ -96,47 +110,68 @@ export class UserService extends BaseService<IUser> {
 			throw new Error('User not found')
 		}
 
-		const isFollowing = user.following.some(
-			(followedUser) =>
-				followedUser._id?.toString() === targetUserId ||
-				followedUser.toString() === targetUserId
-		)
-		if (!isFollowing) {
+		if (!user.following.includes(new Types.ObjectId(targetUserId))) {
 			throw new Error('Not following this user')
 		}
 
-		await Promise.all([
-			this.update(userId, { $pull: { following: targetUserId } }),
-			this.update(targetUserId, { $pull: { followers: userId } }),
-		])
+		user.following = user.following.filter(
+			(id) => id.toString() !== targetUserId
+		)
+		targetUser.followers = targetUser.followers.filter(
+			(id) => id.toString() !== userId
+		)
 
-		const updatedUser = await this.findById(userId)
-		if (!updatedUser) throw new Error('Failed to unfollow user')
-		return updatedUser
+		await Promise.all([user.save(), targetUser.save()])
+
+		return user
 	}
 
 	async getFollowers(userId: string): Promise<IUser[]> {
-		const user = await this.findById(userId)
+		const user = await this.findById(userId, { followers: 1 })
 		if (!user) {
 			throw new Error('User not found')
 		}
+
 		return this.findAll(
 			{ _id: { $in: user.followers } },
-			{ projection: { username: 1, profilePicture: 1, name: 1 } }
+			{},
+			this.getPublicProfileProjection()
 		)
 	}
 
 	async getFollowing(userId: string): Promise<IUser[]> {
-		const user = await this.findById(userId)
+		const user = await this.findById(userId, { following: 1 })
 		if (!user) {
 			throw new Error('User not found')
 		}
-		const following = await this.findAll(
+
+		return this.findAll(
 			{ _id: { $in: user.following } },
-			{ projection: { username: 1, profilePicture: 1, name: 1 } }
+			{},
+			this.getPublicProfileProjection()
 		)
-		if (!following) throw new Error('Failed to fetch following users')
-		return following!
+	}
+
+	async getUserByUsername(username: string): Promise<IUser | null> {
+		const user = await this.findOne(
+			{ username },
+			this.getPublicProfileProjection()
+		)
+
+		if (!user) return null
+
+		await this.model.populate(user, [
+			{
+				path: 'following',
+				select: 'username profilePicture name',
+			},
+			{
+				path: 'followers',
+				select: 'username profilePicture name',
+			},
+		])
+
+		return user
 	}
 
 	async bookmarkRoute(userId: string, routeId: string): Promise<IUser> {
@@ -149,19 +184,12 @@ export class UserService extends BaseService<IUser> {
 			throw new Error('User not found')
 		}
 
-		const isBookmarked = user.bookmarks.some(
-			(bookmark) => bookmark._id.toString() === routeId
-		)
-
-		if (isBookmarked) {
+		if (user.bookmarks.includes(new Types.ObjectId(routeId))) {
 			throw new Error('Route already bookmarked')
 		}
 
-		const updatedUser = await this.update(userId, {
-			$push: { bookmarks: routeId },
-		})
-		if (!updatedUser) throw new Error('Failed to bookmark route')
-		return updatedUser
+		user.bookmarks.push(new Types.ObjectId(routeId))
+		return user.save()
 	}
 
 	async removeBookmark(userId: string, routeId: string): Promise<IUser> {
@@ -174,40 +202,11 @@ export class UserService extends BaseService<IUser> {
 			throw new Error('User not found')
 		}
 
-		const isBookmarked = user.bookmarks.some(
-			(bookmark) => bookmark._id.toString() === routeId
-		)
-
-		if (!isBookmarked) {
+		if (!user.bookmarks.includes(new Types.ObjectId(routeId))) {
 			throw new Error('Route not bookmarked')
 		}
 
-		const updatedUser = await this.update(userId, {
-			$pull: { bookmarks: routeId },
-		})
-		if (!updatedUser) throw new Error('Failed to remove bookmark')
-		return updatedUser
-	}
-
-	async getUserByUsername(username: string): Promise<IUser | null> {
-		if (!username) {
-			throw new Error('Username is required')
-		}
-		const user = await this.findOne({ username })
-		if (!user) return null
-
-		// Populate following and followers with minimal data
-		await user.populate([
-			{
-				path: 'following',
-				select: 'username profilePicture name',
-			},
-			{
-				path: 'followers',
-				select: 'username profilePicture name',
-			},
-		])
-
-		return user
+		user.bookmarks = user.bookmarks.filter((id) => id.toString() !== routeId)
+		return user.save()
 	}
 }
