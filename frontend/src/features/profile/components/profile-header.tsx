@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { getInitials } from '@/lib/utils'
 import { useAuthStore, User } from '@/stores/auth-store'
 import { useUserFollow } from '../hooks/use-user-follow'
+import { Link } from 'react-router-dom'
 
 interface ProfileHeaderProps {
 	user: User
@@ -32,8 +33,8 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
 				</div>
 			</div>
 			{isOwnProfile ? (
-				<Button variant='outline' size='sm'>
-					Edit profile
+				<Button variant='outline' size='sm' asChild>
+					<Link to='/profile/edit'>Edit profile</Link>
 				</Button>
 			) : (
 				currentUser && (

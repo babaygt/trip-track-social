@@ -165,4 +165,21 @@ router.delete(
 	}
 )
 
+// Update profile
+router.patch('/:userId/profile', async (req: Request, res: Response) => {
+	try {
+		const { name, bio, profilePicture } = req.body
+		const user = await userService.updateProfile(req.params.userId, {
+			name,
+			bio,
+			profilePicture,
+		})
+		res.json(user)
+	} catch (error) {
+		const errorMessage =
+			error instanceof Error ? error.message : 'An unknown error occurred'
+		res.status(400).json({ message: errorMessage })
+	}
+})
+
 export default router

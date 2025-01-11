@@ -1,7 +1,18 @@
 import { api } from '@/lib/axios'
 import type { User } from '@/stores/auth-store'
 
+interface UpdateProfileData {
+	name?: string
+	bio?: string
+	profilePicture?: string
+}
+
 export const userApi = {
+	updateProfile: async (userId: string, data: UpdateProfileData) => {
+		const response = await api.patch(`users/${userId}/profile`, data)
+		return response.data as User
+	},
+
 	getUserByUsername: async (username: string) => {
 		const response = await api.get(`users/find/${username}`)
 		return response.data as User

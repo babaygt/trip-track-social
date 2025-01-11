@@ -209,4 +209,21 @@ export class UserService extends BaseService<IUser> {
 		user.bookmarks = user.bookmarks.filter((id) => id.toString() !== routeId)
 		return user.save()
 	}
+
+	async updateProfile(
+		userId: string,
+		data: { name?: string; bio?: string; profilePicture?: string }
+	): Promise<IUser> {
+		const user = await this.findById(userId)
+		if (!user) {
+			throw new Error('User not found')
+		}
+
+		// Update only provided fields
+		if (data.name) user.name = data.name
+		if (data.bio !== undefined) user.bio = data.bio
+		if (data.profilePicture) user.profilePicture = data.profilePicture
+
+		return user.save()
+	}
 }
