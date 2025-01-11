@@ -13,6 +13,9 @@ import conversationRoutes from './routes/conversation-routes'
 import session from 'express-session'
 import { sessionConfig } from './config/session-config'
 import authRouter from './routes/auth-routes'
+import { createRouteHandler } from 'uploadthing/express'
+import { uploadRouter } from './config/uploadthing'
+
 dotenv.config()
 
 const app: Express = express()
@@ -30,6 +33,12 @@ app.use('/routes', routeRoutes)
 app.use('/messages', messageRoutes)
 app.use('/conversations', conversationRoutes)
 app.use('/auth', authRouter)
+app.use(
+	'/api/uploadthing',
+	createRouteHandler({
+		router: uploadRouter,
+	})
+)
 app.all('*', (req, res) => {
 	res.status(404)
 	if (req.accepts('html')) {
