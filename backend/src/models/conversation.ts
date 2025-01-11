@@ -1,5 +1,4 @@
 import { Schema, model, Document, Types } from 'mongoose'
-import autopopulate from 'mongoose-autopopulate'
 
 export interface IConversation extends Document {
 	participants: Types.ObjectId[]
@@ -15,15 +14,13 @@ const ConversationSchema = new Schema<IConversation>(
 				type: Schema.Types.ObjectId,
 				ref: 'User',
 				required: true,
-				autopopulate: {
-					select: 'username profilePicture name',
-				},
+				index: true,
 			},
 		],
 		lastMessage: {
 			type: Schema.Types.ObjectId,
 			ref: 'Message',
-			autopopulate: true,
+			index: true,
 		},
 	},
 	{
@@ -40,15 +37,11 @@ ConversationSchema.pre('save', function (next) {
 	}
 })
 
-// Indexes
+// Indexes for better query performance
 ConversationSchema.index({ participants: 1 })
 ConversationSchema.index({ updatedAt: -1 })
-
-// Compound index for finding conversations between specific users
 ConversationSchema.index({ participants: 1, updatedAt: -1 })
-
-// Plugin
-ConversationSchema.plugin(autopopulate)
+ConversationSchema.index({ lastMessage: 1, updatedAt: -1 })
 
 export const Conversation = model<IConversation>(
 	'Conversation',

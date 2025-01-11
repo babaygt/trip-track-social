@@ -1,5 +1,4 @@
 import { Schema, model, Document, Types } from 'mongoose'
-import autopopulate from 'mongoose-autopopulate'
 
 export interface IMessage extends Document {
 	conversation: Types.ObjectId
@@ -22,9 +21,7 @@ const MessageSchema = new Schema<IMessage>(
 			type: Schema.Types.ObjectId,
 			ref: 'User',
 			required: true,
-			autopopulate: {
-				select: 'username profilePicture name',
-			},
+			index: true,
 		},
 		content: {
 			type: String,
@@ -36,9 +33,6 @@ const MessageSchema = new Schema<IMessage>(
 			{
 				type: Schema.Types.ObjectId,
 				ref: 'User',
-				autopopulate: {
-					select: 'username',
-				},
 			},
 		],
 	},
@@ -47,11 +41,10 @@ const MessageSchema = new Schema<IMessage>(
 	}
 )
 
-// Indexes
+// Indexes for better query performance
 MessageSchema.index({ conversation: 1, createdAt: -1 })
 MessageSchema.index({ sender: 1, createdAt: -1 })
-
-// Plugin
-MessageSchema.plugin(autopopulate)
+MessageSchema.index({ readBy: 1 })
+MessageSchema.index({ conversation: 1, sender: 1, createdAt: -1 })
 
 export const Message = model<IMessage>('Message', MessageSchema)

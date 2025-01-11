@@ -1,5 +1,4 @@
 import { Schema, model, Document, Types } from 'mongoose'
-import autopopulate from 'mongoose-autopopulate'
 
 export interface IUser extends Document {
 	name: string
@@ -52,6 +51,7 @@ const UserSchema = new Schema<IUser>(
 			type: String,
 			required: [true, 'Password is required'],
 			minlength: [8, 'Password must be at least 8 characters long'],
+			select: false,
 		},
 		bio: {
 			type: String,
@@ -80,7 +80,6 @@ const UserSchema = new Schema<IUser>(
 			{
 				type: Schema.Types.ObjectId,
 				ref: 'Route',
-				autopopulate: true,
 			},
 		],
 		conversations: [
@@ -109,12 +108,12 @@ const UserSchema = new Schema<IUser>(
 	}
 )
 
-// Indexes
+// Compound indexes for better query performance
 UserSchema.index({ username: 1 })
 UserSchema.index({ email: 1 })
 UserSchema.index({ createdAt: -1 })
-
-// Plugin
-UserSchema.plugin(autopopulate)
+UserSchema.index({ followers: 1, createdAt: -1 })
+UserSchema.index({ following: 1, createdAt: -1 })
+UserSchema.index({ bookmarks: 1, createdAt: -1 })
 
 export const User = model<IUser>('User', UserSchema)

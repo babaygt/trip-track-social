@@ -1,5 +1,4 @@
 import { Schema, Types, Document } from 'mongoose'
-import autopopulate from 'mongoose-autopopulate'
 
 export interface IComment extends Document {
 	user: Types.ObjectId
@@ -13,9 +12,7 @@ export const CommentSchema = new Schema<IComment>({
 		type: Schema.Types.ObjectId,
 		ref: 'User',
 		required: [true, 'User is required'],
-		autopopulate: {
-			select: 'username profilePicture name',
-		},
+		index: true,
 	},
 	content: {
 		type: String,
@@ -26,13 +23,14 @@ export const CommentSchema = new Schema<IComment>({
 	createdAt: {
 		type: Date,
 		default: Date.now,
+		index: true,
 	},
 })
 
 // Methods
 CommentSchema.methods.isOwner = function (userId: string): boolean {
-	return this.user._id.toString() === userId.toString()
+	return this.user.toString() === userId.toString()
 }
 
-// Plugin
-CommentSchema.plugin(autopopulate)
+// Compound indexes
+CommentSchema.index({ user: 1, createdAt: -1 })

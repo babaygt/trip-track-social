@@ -1,7 +1,6 @@
 import { Schema, model, Document, Types } from 'mongoose'
 import { PointSchema, IPoint } from './point'
 import { CommentSchema, IComment } from './comment'
-import autopopulate from 'mongoose-autopopulate'
 
 export type TravelMode = 'DRIVING' | 'BICYCLING' | 'TRANSIT' | 'WALKING'
 export type Visibility = 'public' | 'private' | 'followers'
@@ -40,9 +39,6 @@ const RouteSchema = new Schema<IRoute>(
 			type: Schema.Types.ObjectId,
 			ref: 'User',
 			required: true,
-			autopopulate: {
-				select: 'username profilePicture name',
-			},
 		},
 		startPoint: {
 			type: PointSchema,
@@ -81,9 +77,6 @@ const RouteSchema = new Schema<IRoute>(
 			{
 				type: Schema.Types.ObjectId,
 				ref: 'User',
-				autopopulate: {
-					select: 'username profilePicture name',
-				},
 			},
 		],
 		comments: [CommentSchema],
@@ -109,12 +102,14 @@ const RouteSchema = new Schema<IRoute>(
 	}
 )
 
-// Indexes for better query performance
+// Compound indexes for better query performance
 RouteSchema.index({ creator: 1, createdAt: -1 })
-RouteSchema.index({ tags: 1 })
-RouteSchema.index({ visibility: 1 })
-RouteSchema.index({ 'startPoint.lat': 1, 'startPoint.lng': 1 })
-RouteSchema.index({ 'endPoint.lat': 1, 'endPoint.lng': 1 })
+RouteSchema.index({ visibility: 1, createdAt: -1 })
+RouteSchema.index({ tags: 1, createdAt: -1 })
+RouteSchema.index({ 'startPoint.lat': 1, 'startPoint.lng': 1, createdAt: -1 })
+RouteSchema.index({ 'endPoint.lat': 1, 'endPoint.lng': 1, createdAt: -1 })
+RouteSchema.index({ likes: 1, createdAt: -1 })
+RouteSchema.index({ visibility: 1, creator: 1, createdAt: -1 })
 
 // Virtual for comment count
 RouteSchema.virtual('commentCount').get(function () {
@@ -139,8 +134,5 @@ RouteSchema.methods.isLikedBy = function (userId: string): boolean {
 		return like.toString() === userId.toString()
 	})
 }
-
-// Plugin
-RouteSchema.plugin(autopopulate)
 
 export const Route = model<IRoute>('Route', RouteSchema)
