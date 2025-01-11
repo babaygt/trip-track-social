@@ -5,29 +5,39 @@ import {
 	QueryOptions,
 	Types,
 	UpdateQuery,
+	ProjectionType,
 } from 'mongoose'
 
 export abstract class BaseService<T extends Document> {
-	constructor(private model: Model<T>) {
-		this.model = model
+	constructor(protected model: Model<T>) {}
+
+	protected getDefaultProjection(): ProjectionType<T> {
+		return {}
 	}
 
 	async findAll(
 		filter: FilterQuery<T> = {},
-		options: QueryOptions = {}
+		options: QueryOptions = {},
+		projection: ProjectionType<T> = this.getDefaultProjection()
 	): Promise<T[]> {
-		return this.model.find(filter, null, options)
+		return this.model.find(filter, projection, options).exec()
 	}
 
-	async findById(id: string): Promise<T | null> {
+	async findById(
+		id: string,
+		projection: ProjectionType<T> = this.getDefaultProjection()
+	): Promise<T | null> {
 		if (!Types.ObjectId.isValid(id)) {
 			throw new Error('Invalid ID format')
 		}
-		return this.model.findById(id)
+		return this.model.findById(id, projection).exec()
 	}
 
-	async findOne(filter: FilterQuery<T>): Promise<T | null> {
-		return this.model.findOne(filter)
+	async findOne(
+		filter: FilterQuery<T>,
+		projection: ProjectionType<T> = this.getDefaultProjection()
+	): Promise<T | null> {
+		return this.model.findOne(filter, projection).exec()
 	}
 
 	async create(data: Partial<T>): Promise<T> {
@@ -39,23 +49,23 @@ export abstract class BaseService<T extends Document> {
 		if (!Types.ObjectId.isValid(id)) {
 			throw new Error('Invalid ID format')
 		}
-		return this.model.findByIdAndUpdate(id, data, { new: true })
+		return this.model.findByIdAndUpdate(id, data, { new: true }).exec()
 	}
 
 	async delete(id: string): Promise<T | null> {
 		if (!Types.ObjectId.isValid(id)) {
 			throw new Error('Invalid ID format')
 		}
-		return this.model.findByIdAndDelete(id)
+		return this.model.findByIdAndDelete(id).exec()
 	}
 
 	async exists(filter: FilterQuery<T>): Promise<boolean> {
-		const count = await this.model.countDocuments(filter)
-		return count > 0
+		const doc = await this.model.exists(filter)
+		return doc !== null
 	}
 
 	async count(filter: FilterQuery<T> = {}): Promise<number> {
-		return this.model.countDocuments(filter)
+		return this.model.countDocuments(filter).exec()
 	}
 
 	async findWithPagination(
@@ -65,9 +75,16 @@ export abstract class BaseService<T extends Document> {
 		options: QueryOptions = {}
 	): Promise<{ data: T[]; total: number; pages: number }> {
 		const skip = (page - 1) * limit
-		const [data, total] = await Promise.all([
-			this.model.find(filter, null, { ...options, skip, limit }),
-			this.model.countDocuments(filter),
+
+		const [total, data] = await Promise.all([
+			this.model.countDocuments(filter).exec(),
+			this.model
+				.find(filter, this.getDefaultProjection(), {
+					...options,
+					skip,
+					limit,
+				})
+				.exec(),
 		])
 
 		return {
