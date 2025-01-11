@@ -280,6 +280,11 @@ export class RouteService extends BaseService<IRoute> {
 	async getPublicRoutes(page = 1, limit = 10) {
 		return this.findWithPagination({ visibility: 'public' }, page, limit, {
 			sort: { createdAt: -1 },
+			populate: {
+				path: 'creator',
+				select: 'name username profilePicture',
+				model: 'User',
+			},
 		})
 	}
 
