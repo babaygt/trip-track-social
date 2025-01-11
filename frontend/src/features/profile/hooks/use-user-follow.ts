@@ -37,58 +37,53 @@ export function useUserFollow(targetUser: User) {
 
 		const newIsFollowing = !isFollowing
 
-		// Optimistically update state
-		setUser({
-			...user,
-			following: newIsFollowing
-				? [...(user.following || []), targetUser._id]
-				: (user.following || []).filter((id) => {
-						const followingIdStr =
-							typeof id === 'object' && '_id' in id
-								? (id as { _id: string })._id
-								: id.toString()
-						return followingIdStr !== targetUser._id
-				  }),
-		})
-
-		// Show optimistic toast
-		toast.success(
-			newIsFollowing
-				? `You are now following ${targetUser.username}`
-				: `You unfollowed ${targetUser.username}`
-		)
-
 		try {
-			// Make API call to update follow status
-			if (newIsFollowing) {
-				await userApi.followUser(user._id, targetUser._id)
-			} else {
-				await userApi.unfollowUser(user._id, targetUser._id)
-			}
+			// Make API call first
+			const response = newIsFollowing
+				? await userApi.followUser(user._id, targetUser._id)
+				: await userApi.unfollowUser(user._id, targetUser._id)
 
-			// Invalidate user queries to refetch updated data
+			// Update auth store with server response
+			setUser(response)
+
+			// Update cache with server response
+			queryClient.setQueryData(['user', user.username], response)
+			queryClient.setQueryData(['profile', user.username], response)
+
+			// Invalidate target user queries to trigger a refetch
+			queryClient.invalidateQueries({
+				queryKey: ['user', targetUser.username],
+				exact: true,
+			})
 			queryClient.invalidateQueries({
 				queryKey: ['profile', targetUser.username],
+				exact: true,
 			})
-			queryClient.invalidateQueries({ queryKey: ['profile', user.username] })
-			queryClient.invalidateQueries({ queryKey: ['user', targetUser.username] })
-			queryClient.invalidateQueries({ queryKey: ['user', user.username] })
 		} catch (error) {
 			const axiosError = error as AxiosError<{ message: string }>
 			console.error('Follow error:', error)
 
 			if (axiosError.response?.status === 400) {
-				// If we get a 400, the state is already what we want
+				// If we get a 400, refetch both users to get the correct state
+				queryClient.invalidateQueries({
+					queryKey: ['user', targetUser.username],
+					exact: true,
+				})
+				queryClient.invalidateQueries({
+					queryKey: ['profile', targetUser.username],
+					exact: true,
+				})
+				queryClient.invalidateQueries({
+					queryKey: ['user', user.username],
+					exact: true,
+				})
+				queryClient.invalidateQueries({
+					queryKey: ['profile', user.username],
+					exact: true,
+				})
 				return
 			}
 
-			// Revert state on error
-			setUser({
-				...user,
-				following: newIsFollowing
-					? (user.following || []).filter((id) => id !== targetUser._id)
-					: [...(user.following || []), targetUser._id],
-			})
 			toast.error('Failed to update follow status')
 		} finally {
 			// Allow next update after a small delay
