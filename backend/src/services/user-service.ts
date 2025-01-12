@@ -40,6 +40,9 @@ export class UserService extends BaseService<IUser> {
 	}
 
 	async verifyPassword(userId: string, password: string): Promise<boolean> {
+		if (!Types.ObjectId.isValid(userId)) {
+			throw new Error('Invalid ID format')
+		}
 		const user = await this.model.findById(userId).select('+password').exec()
 		if (!user) {
 			throw new Error('User not found')
@@ -52,6 +55,9 @@ export class UserService extends BaseService<IUser> {
 		oldPassword: string,
 		newPassword: string
 	): Promise<IUser> {
+		if (!Types.ObjectId.isValid(userId)) {
+			throw new Error('Invalid ID format')
+		}
 		const user = await this.model.findById(userId).select('+password').exec()
 		if (!user) {
 			throw new Error('User not found')
@@ -63,11 +69,9 @@ export class UserService extends BaseService<IUser> {
 		}
 
 		const hashedPassword = await bcrypt.hash(newPassword, 10)
-		const updatedUser = await this.update(userId, { password: hashedPassword })
-		if (!updatedUser) {
-			throw new Error('Failed to update password')
-		}
-		return updatedUser
+		user.password = hashedPassword
+		await user.save()
+		return this.findById(userId) as Promise<IUser>
 	}
 
 	async followUser(userId: string, targetUserId: string): Promise<IUser> {
@@ -93,7 +97,11 @@ export class UserService extends BaseService<IUser> {
 
 		await Promise.all([user.save(), targetUser.save()])
 
-		return user
+		return this.model
+			.findById(userId)
+			.populate('following', 'name username profilePicture')
+			.populate('followers', 'name username profilePicture')
+			.exec() as Promise<IUser>
 	}
 
 	async unfollowUser(userId: string, targetUserId: string): Promise<IUser> {
@@ -123,7 +131,11 @@ export class UserService extends BaseService<IUser> {
 
 		await Promise.all([user.save(), targetUser.save()])
 
-		return user
+		return this.model
+			.findById(userId)
+			.populate('following', 'name username profilePicture')
+			.populate('followers', 'name username profilePicture')
+			.exec() as Promise<IUser>
 	}
 
 	async getFollowers(userId: string): Promise<IUser[]> {
@@ -153,11 +165,11 @@ export class UserService extends BaseService<IUser> {
 	}
 
 	async getUserByUsername(username: string): Promise<IUser | null> {
-		const user = await this.findOne(
-			{ username },
-			this.getPublicProfileProjection()
-		)
+		if (!username.trim()) {
+			throw new Error('Username is required')
+		}
 
+		const user = await this.findOne({ username })
 		if (!user) return null
 
 		await this.model.populate(user, [
@@ -189,7 +201,14 @@ export class UserService extends BaseService<IUser> {
 		}
 
 		user.bookmarks.push(new Types.ObjectId(routeId))
-		return user.save()
+		await user.save()
+
+		return this.model
+			.findById(userId)
+			.populate('bookmarks')
+			.populate('following', 'name username profilePicture')
+			.populate('followers', 'name username profilePicture')
+			.exec() as Promise<IUser>
 	}
 
 	async removeBookmark(userId: string, routeId: string): Promise<IUser> {
@@ -207,7 +226,14 @@ export class UserService extends BaseService<IUser> {
 		}
 
 		user.bookmarks = user.bookmarks.filter((id) => id.toString() !== routeId)
-		return user.save()
+		await user.save()
+
+		return this.model
+			.findById(userId)
+			.populate('bookmarks')
+			.populate('following', 'name username profilePicture')
+			.populate('followers', 'name username profilePicture')
+			.exec() as Promise<IUser>
 	}
 
 	async updateProfile(

@@ -120,15 +120,15 @@ describe('UserService', () => {
 
 			expect(updatedUser).toBeDefined()
 			// Verify new password works
-			const isValidNewPassword = await bcrypt.compare(
-				'newpassword123',
-				updatedUser.password
+			const isValidNewPassword = await userService.verifyPassword(
+				user.id,
+				'newpassword123'
 			)
 			expect(isValidNewPassword).toBe(true)
 			// Verify old password doesn't work
-			const isValidOldPassword = await bcrypt.compare(
-				'password123',
-				updatedUser.password
+			const isValidOldPassword = await userService.verifyPassword(
+				user.id,
+				'password123'
 			)
 			expect(isValidOldPassword).toBe(false)
 		})
