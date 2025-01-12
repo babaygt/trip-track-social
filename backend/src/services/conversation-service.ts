@@ -19,15 +19,47 @@ export class ConversationService extends BaseService<IConversation> {
 		const participants = participantIds.map((id) => new Types.ObjectId(id))
 
 		// Check if conversation already exists between these participants
-		const existingConversation = await this.findOne({
-			participants: { $all: participants, $size: participants.length },
-		})
+		const existingConversation = await this.model
+			.findOne({
+				participants: { $all: participants, $size: participants.length },
+			})
+			.populate('participants', 'name username profilePicture')
+			.populate({
+				path: 'lastMessage',
+				populate: [
+					{
+						path: 'sender',
+						select: 'name username profilePicture',
+					},
+					{
+						path: 'readBy',
+						select: 'name username profilePicture',
+					},
+				],
+			})
 
 		if (existingConversation) {
 			return existingConversation
 		}
 
-		return this.create({ participants })
+		const newConversation = await this.create({ participants })
+		return this.model
+			.findById(newConversation._id)
+			.populate('participants', 'name username profilePicture')
+			.populate({
+				path: 'lastMessage',
+				populate: [
+					{
+						path: 'sender',
+						select: 'name username profilePicture',
+					},
+					{
+						path: 'readBy',
+						select: 'name username profilePicture',
+					},
+				],
+			})
+			.then((doc) => doc!)
 	}
 
 	async getConversationsByUserId(
@@ -39,12 +71,34 @@ export class ConversationService extends BaseService<IConversation> {
 			throw new Error('Invalid user ID format')
 		}
 
-		return this.findWithPagination(
-			{ participants: new Types.ObjectId(userId) },
-			page,
-			limit,
-			{ sort: { updatedAt: -1 } }
-		)
+		const [total, data] = await Promise.all([
+			this.model.countDocuments({ participants: new Types.ObjectId(userId) }),
+			this.model
+				.find({ participants: new Types.ObjectId(userId) })
+				.sort({ updatedAt: -1 })
+				.skip((page - 1) * limit)
+				.limit(limit)
+				.populate('participants', 'name username profilePicture')
+				.populate({
+					path: 'lastMessage',
+					populate: [
+						{
+							path: 'sender',
+							select: 'name username profilePicture',
+						},
+						{
+							path: 'readBy',
+							select: 'name username profilePicture',
+						},
+					],
+				}),
+		])
+
+		return {
+			data,
+			total,
+			pages: Math.ceil(total / limit),
+		}
 	}
 
 	async updateLastMessage(
@@ -58,9 +112,26 @@ export class ConversationService extends BaseService<IConversation> {
 			throw new Error('Invalid ID format')
 		}
 
-		const updatedConversation = await this.update(conversationId, {
-			lastMessage: new Types.ObjectId(messageId),
-		})
+		const updatedConversation = await this.model
+			.findByIdAndUpdate(
+				conversationId,
+				{ lastMessage: new Types.ObjectId(messageId) },
+				{ new: true }
+			)
+			.populate('participants', 'name username profilePicture')
+			.populate({
+				path: 'lastMessage',
+				populate: [
+					{
+						path: 'sender',
+						select: 'name username profilePicture',
+					},
+					{
+						path: 'readBy',
+						select: 'name username profilePicture',
+					},
+				],
+			})
 
 		if (!updatedConversation) {
 			throw new Error('Conversation not found')

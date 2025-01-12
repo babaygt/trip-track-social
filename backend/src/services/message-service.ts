@@ -19,12 +19,18 @@ export class MessageService extends BaseService<IMessage> {
 			throw new Error('Invalid ID format')
 		}
 
-		return this.create({
+		const message = await this.model.create({
 			conversation: new Types.ObjectId(conversationId),
 			sender: new Types.ObjectId(senderId),
 			content,
 			readBy: [new Types.ObjectId(senderId)], // Mark as read by sender
 		})
+
+		return this.model
+			.findById(message._id)
+			.populate('sender', 'name username profilePicture')
+			.populate('readBy', 'name username profilePicture')
+			.then((doc) => doc!)
 	}
 
 	async markAsRead(messageId: string, userId: string): Promise<IMessage> {
@@ -32,22 +38,31 @@ export class MessageService extends BaseService<IMessage> {
 			throw new Error('Invalid ID format')
 		}
 
-		const message = await this.findById(messageId)
+		const message = await this.model
+			.findById(messageId)
+			.populate('sender', 'name username profilePicture')
+			.populate('readBy', 'name username profilePicture')
+
 		if (!message) {
 			throw new Error('Message not found')
 		}
 
 		const isAlreadyRead = message.readBy.some(
-			(readerId) => readerId._id.toString() === userId
+			(reader) => reader._id.toString() === userId
 		)
 
 		if (isAlreadyRead) {
 			return message
 		}
 
-		const updatedMessage = await this.update(messageId, {
-			$push: { readBy: new Types.ObjectId(userId) },
-		})
+		const updatedMessage = await this.model
+			.findByIdAndUpdate(
+				messageId,
+				{ $push: { readBy: new Types.ObjectId(userId) } },
+				{ new: true }
+			)
+			.populate('sender', 'name username profilePicture')
+			.populate('readBy', 'name username profilePicture')
 
 		if (!updatedMessage) throw new Error('Failed to mark message as read')
 		return updatedMessage
@@ -62,11 +77,21 @@ export class MessageService extends BaseService<IMessage> {
 			throw new Error('Invalid conversation ID format')
 		}
 
-		return this.findWithPagination(
-			{ conversation: conversationId },
-			page,
-			limit,
-			{ sort: { createdAt: -1 } }
-		)
+		const [total, data] = await Promise.all([
+			this.model.countDocuments({ conversation: conversationId }),
+			this.model
+				.find({ conversation: conversationId })
+				.sort({ createdAt: -1 })
+				.skip((page - 1) * limit)
+				.limit(limit)
+				.populate('sender', 'name username profilePicture')
+				.populate('readBy', 'name username profilePicture'),
+		])
+
+		return {
+			data,
+			total,
+			pages: Math.ceil(total / limit),
+		}
 	}
 }
