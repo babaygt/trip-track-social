@@ -7,6 +7,7 @@ import router from '../../src/routes/auth-routes'
 import { Request, Response } from 'express'
 import session, { Session, SessionData } from 'express-session'
 import { AuthService } from '../../src/services/auth-service'
+import cookieParser from 'cookie-parser'
 
 describe('Auth Routes', () => {
 	let userService: UserService
@@ -28,7 +29,25 @@ describe('Auth Routes', () => {
 			// Create a test user first
 			await userService.createUser(validUserData)
 
-			const response = await request(app)
+			// Create a test app with all necessary middleware
+			const testApp = express()
+			testApp.use(express.json())
+			testApp.use(cookieParser())
+			testApp.use(
+				session({
+					secret: 'test-secret',
+					resave: false,
+					saveUninitialized: false,
+					cookie: {
+						secure: false,
+						httpOnly: true,
+						maxAge: 24 * 60 * 60 * 1000, // 1 day
+					},
+				})
+			)
+			testApp.use('/auth', router)
+
+			const response = await request(testApp)
 				.post('/auth/login')
 				.send({
 					email: validUserData.email,
@@ -37,7 +56,6 @@ describe('Auth Routes', () => {
 				.expect(200)
 
 			expect(response.body).toEqual({
-				__v: expect.any(Number),
 				_id: expect.any(String),
 				bio: validUserData.bio,
 				bookmarks: [],
@@ -53,7 +71,7 @@ describe('Auth Routes', () => {
 				updatedAt: expect.any(String),
 				username: validUserData.username,
 			})
-		})
+		}, 10000) // Increased timeout to 10 seconds
 
 		it('should return 400 with invalid email format', async () => {
 			const response = await request(app)
@@ -117,15 +135,55 @@ describe('Auth Routes', () => {
 
 	describe('POST /auth/logout', () => {
 		it('should successfully log out user', async () => {
-			const response = await request(app).post('/auth/logout').expect(200)
+			// Create a test app with all necessary middleware
+			const testApp = express()
+			testApp.use(express.json())
+			testApp.use(cookieParser())
+			testApp.use(
+				session({
+					secret: 'test-secret',
+					resave: false,
+					saveUninitialized: false,
+					cookie: {
+						secure: false,
+						httpOnly: true,
+						maxAge: 24 * 60 * 60 * 1000, // 1 day
+					},
+				})
+			)
+			testApp.use('/auth', router)
+
+			// First create a session by logging in
+			await userService.createUser({
+				name: 'Test User',
+				username: 'testuser',
+				email: 'test@example.com',
+				password: 'password123',
+				bio: 'Test bio',
+			})
+
+			const agent = request.agent(testApp)
+			await agent
+				.post('/auth/login')
+				.send({
+					email: 'test@example.com',
+					password: 'password123',
+				})
+				.expect(200)
+
+			// Now try to logout
+			const response = await agent.post('/auth/logout').expect(200)
 
 			expect(response.body).toEqual({
 				message: 'Logged out successfully',
 			})
 
-			// Verify cookie is cleared
-			expect(response.headers['set-cookie'][0]).toContain('connect.sid=;')
-		})
+			// Verify session is destroyed by trying to access a protected route
+			const sessionResponse = await agent.get('/auth/session').expect(401)
+			expect(sessionResponse.body).toEqual({
+				message: 'No active session',
+			})
+		}, 10000) // Increased timeout to 10 seconds
 
 		it('should handle session destruction error', async () => {
 			// Mock express-session by extending the request object

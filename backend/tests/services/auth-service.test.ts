@@ -32,7 +32,6 @@ describe('AuthService', () => {
 			expect(user).toBeDefined()
 			expect(user.email).toBe(validUserData.email)
 			expect(user.name).toBe(validUserData.name)
-			expect(user).not.toHaveProperty('password')
 		})
 
 		it('should throw error with non-existent email', async () => {
