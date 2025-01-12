@@ -4,6 +4,11 @@ import { config } from 'dotenv'
 
 config({ path: '.env.test' })
 
+// Mock UploadThing environment variables for testing
+process.env.UPLOADTHING_SECRET = 'mock-secret'
+process.env.UPLOADTHING_APP_ID = 'mock-app-id'
+process.env.UPLOADTHING_TOKEN = 'mock-token'
+
 let mongod: MongoMemoryServer
 
 beforeAll(async () => {
