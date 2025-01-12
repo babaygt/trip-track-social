@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Menu } from 'lucide-react'
+import { Menu, MessageSquare } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { authApi } from '@/services'
 import { toast } from 'react-hot-toast'
@@ -31,6 +31,11 @@ export function Navbar() {
 				<>
 					<Link to='/profile'>
 						<Button variant='ghost'>Profile</Button>
+					</Link>
+					<Link to='/chat'>
+						<Button variant='ghost' size='icon'>
+							<MessageSquare className='h-5 w-5' />
+						</Button>
 					</Link>
 					<Button onClick={handleLogout} variant='ghost'>
 						Logout

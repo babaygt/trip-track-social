@@ -9,6 +9,7 @@ const ProfileEdit = lazy(() => import('@/features/profile/pages/profile-edit'))
 const RouteCreator = lazy(() => import('@/features/route/index'))
 const Home = lazy(() => import('@/features/home/page'))
 const RoutePost = lazy(() => import('@/features/route/pages/route-post-page'))
+const Chat = lazy(() => import('@/features/chat/pages/chat'))
 
 export const routes: RouteObject[] = [
 	{
@@ -42,5 +43,9 @@ export const routes: RouteObject[] = [
 	{
 		path: '/routes/:routeId',
 		element: <RoutePost />,
+	},
+	{
+		path: '/chat',
+		element: <Chat />,
 	},
 ]
