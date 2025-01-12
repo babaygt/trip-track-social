@@ -15,6 +15,8 @@ import { sessionConfig } from './config/session-config'
 import authRouter from './routes/auth-routes'
 import { createRouteHandler } from 'uploadthing/express'
 import { uploadRouter } from './config/uploadthing'
+import swaggerUi from 'swagger-ui-express'
+import { swaggerSpec } from './config/swagger'
 
 dotenv.config()
 
@@ -39,6 +41,7 @@ app.use(
 		router: uploadRouter,
 	})
 )
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 app.all('*', (req, res) => {
 	res.status(404)
 	if (req.accepts('html')) {
