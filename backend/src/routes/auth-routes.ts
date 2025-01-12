@@ -6,7 +6,46 @@ import 'express-session'
 const router: Router = express.Router()
 const authService = new AuthService()
 
-// Login
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Login to the application
+ *     description: Authenticate user and create a session
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: "********"
+ *     responses:
+ *       200:
+ *         description: Successfully authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Invalid credentials
+ *       401:
+ *         description: Authentication failed
+ */
 router.post(
 	'/login',
 	[
@@ -36,7 +75,21 @@ router.post(
 	}
 )
 
-// Logout
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Logout from the application
+ *     description: Destroy the current session
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully logged out
+ *       401:
+ *         description: Not authenticated
+ */
 router.post('/logout', (req: Request, res: Response) => {
 	req.session.destroy((err) => {
 		if (err) {
@@ -47,7 +100,28 @@ router.post('/logout', (req: Request, res: Response) => {
 	})
 })
 
-// Get current session
+/**
+ * @swagger
+ * /auth/session:
+ *   get:
+ *     tags: [Auth]
+ *     summary: Validate current session
+ *     description: Check if the current session is valid and return user data
+ *     security:
+ *       - sessionAuth: []
+ *     responses:
+ *       200:
+ *         description: Session is valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Session is invalid or expired
+ */
 router.get('/session', async (req: Request, res: Response) => {
 	try {
 		if (!req.session.userId) {
