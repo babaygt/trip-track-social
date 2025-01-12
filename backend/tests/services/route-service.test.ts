@@ -1,7 +1,7 @@
 import { RouteService } from '../../src/services/route-service'
+import { Route, User, IRoute } from '../../src/models'
 import { Types } from 'mongoose'
-import { Route, TravelMode } from '../../src/models/route'
-import { User } from '../../src/models'
+import { TravelMode } from '../../src/models/route'
 
 describe('RouteService', () => {
 	let routeService: RouteService
@@ -547,7 +547,7 @@ describe('RouteService', () => {
 		let routeService: RouteService
 		let userId: Types.ObjectId
 
-		describe('getRoutes', () => {
+		describe('getPublicRoutes', () => {
 			beforeEach(async () => {
 				// Clear the collections before each test
 				await User.deleteMany({})
@@ -589,14 +589,11 @@ describe('RouteService', () => {
 			})
 
 			it('should return public routes with default pagination', async () => {
-				const result = await routeService.getRoutes(1, 10)
-
-				// Optional: Log the result for debugging
-				// console.log(result.data);
+				const result = await routeService.getPublicRoutes(1, 10)
 
 				expect(result.data).toHaveLength(10)
-				expect(result.page).toBe(1)
-				expect(result.limit).toBe(10)
+				expect(result.pages).toBeGreaterThan(0)
+				expect(result.total).toBeGreaterThan(0)
 
 				// Verify only public routes are returned
 				result.data.forEach((route) => {
@@ -612,34 +609,34 @@ describe('RouteService', () => {
 			})
 
 			it('should return correct page of results', async () => {
-				const page1 = await routeService.getRoutes(1, 5)
-				const page2 = await routeService.getRoutes(2, 5)
+				const page1 = await routeService.getPublicRoutes(1, 5)
+				const page2 = await routeService.getPublicRoutes(2, 5)
 
 				expect(page1.data).toHaveLength(5)
 				expect(page2.data).toHaveLength(5)
 
 				// Verify different routes are returned
 				const page1Ids = page1.data.map((route) =>
-					(route as { _id: Types.ObjectId })._id.toString()
+					(route as IRoute & { _id: Types.ObjectId })._id.toString()
 				)
 				const page2Ids = page2.data.map((route) =>
-					(route as { _id: Types.ObjectId })._id.toString()
+					(route as IRoute & { _id: Types.ObjectId })._id.toString()
 				)
 				expect(page1Ids).not.toEqual(page2Ids)
 			})
 
 			it('should return empty array when page exceeds available routes', async () => {
-				const result = await routeService.getRoutes(100, 10)
+				const result = await routeService.getPublicRoutes(100, 10)
 
 				expect(result.data).toHaveLength(0)
-				expect(result.page).toBe(100)
-				expect(result.limit).toBe(10)
+				expect(result.pages).toBeGreaterThan(0)
+				expect(result.total).toBeGreaterThan(0)
 			})
 
 			it('should sort routes by createdAt in descending order', async () => {
-				const result = await routeService.getRoutes(1, 10)
+				const result = await routeService.getPublicRoutes(1, 10)
 
-				const dates = result.data.map((route) =>
+				const dates = result.data.map((route: IRoute) =>
 					new Date(route.createdAt).getTime()
 				)
 				const sortedDates = [...dates].sort((a, b) => b - a)
@@ -698,7 +695,7 @@ describe('RouteService - getRoute', () => {
 
 		expect(route).toBeDefined()
 		expect((route as { _id: Types.ObjectId })._id.toString()).toBe(routeId)
-		expect(route.title).toBe('Test Route')
+		expect(route?.title).toBe('Test Route')
 	})
 
 	it('should throw an error when the route does not exist', async () => {

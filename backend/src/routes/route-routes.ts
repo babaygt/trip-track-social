@@ -138,8 +138,11 @@ router.get('/find/:routeId', async (req: Request, res: Response) => {
 			if (error.message === 'Route not found') {
 				statusCode = 404
 				errorMessage = error.message
-			} else if (error.name === 'CastError') {
-				errorMessage = 'Invalid route ID format'
+			} else if (
+				error.name === 'CastError' ||
+				error.message === 'Invalid ID format'
+			) {
+				errorMessage = 'Invalid ID format'
 			} else {
 				errorMessage = error.message
 			}

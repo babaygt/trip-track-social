@@ -821,11 +821,11 @@ describe('Route Routes', () => {
 
 			expect(response.body).toBeDefined()
 			expect(response.body.data).toHaveLength(10) // Default limit is 10
-			expect(response.body.page).toBe(1)
-			expect(response.body.limit).toBe(10)
+			expect(response.body.pages).toBeGreaterThan(0)
+			expect(response.body.total).toBeGreaterThan(0)
 
 			// Verify only public routes are returned
-			response.body.data.forEach((route: IRoute) => {
+			response.body.data.forEach((route: { visibility: string }) => {
 				expect(route.visibility).toBe('public')
 			})
 		})
@@ -857,8 +857,8 @@ describe('Route Routes', () => {
 				.expect(200)
 
 			expect(response.body.data).toHaveLength(0)
-			expect(response.body.page).toBe(100)
-			expect(response.body.limit).toBe(10)
+			expect(response.body.pages).toBeGreaterThan(0)
+			expect(response.body.total).toBeGreaterThan(0)
 		})
 	})
 

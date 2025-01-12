@@ -38,12 +38,17 @@ export class RouteService extends BaseService<IRoute> {
 	}
 
 	async createRoute(routeData: Partial<IRoute>): Promise<IRoute> {
-		return this.create(routeData)
+		const route = await this.create(routeData)
+		return this.model
+			.findById(route._id)
+			.populate('creator', 'name username profilePicture')
+			.populate('likes', 'name username profilePicture')
+			.exec() as Promise<IRoute>
 	}
 
 	async likeRoute(routeId: string, userId: string): Promise<IRoute> {
 		if (!Types.ObjectId.isValid(routeId)) {
-			throw new RouteError('Invalid route ID')
+			throw new RouteError('Invalid ID format')
 		}
 
 		const route = await this.findById(routeId)
@@ -55,9 +60,15 @@ export class RouteService extends BaseService<IRoute> {
 			throw new RouteError('Route already liked')
 		}
 
-		const updatedRoute = await this.update(routeId, {
-			$addToSet: { likes: new Types.ObjectId(userId) },
-		})
+		const updatedRoute = await this.model
+			.findByIdAndUpdate(
+				routeId,
+				{ $addToSet: { likes: new Types.ObjectId(userId) } },
+				{ new: true }
+			)
+			.populate('creator', 'name username profilePicture')
+			.populate('likes', 'name username profilePicture')
+			.exec()
 
 		if (!updatedRoute) {
 			throw new RouteError('Failed to like route')
@@ -68,7 +79,7 @@ export class RouteService extends BaseService<IRoute> {
 
 	async unlikeRoute(routeId: string, userId: string): Promise<IRoute> {
 		if (!Types.ObjectId.isValid(routeId)) {
-			throw new RouteError('Invalid route ID')
+			throw new RouteError('Invalid ID format')
 		}
 
 		const route = await this.findById(routeId)
@@ -97,7 +108,7 @@ export class RouteService extends BaseService<IRoute> {
 		content: string
 	): Promise<IRoute> {
 		if (!Types.ObjectId.isValid(routeId)) {
-			throw new RouteError('Invalid route ID')
+			throw new RouteError('Invalid ID format')
 		}
 
 		if (!content.trim()) {
@@ -152,11 +163,11 @@ export class RouteService extends BaseService<IRoute> {
 		userId: string
 	): Promise<IRoute> {
 		if (!Types.ObjectId.isValid(routeId)) {
-			throw new RouteError('Invalid route ID')
+			throw new RouteError('Invalid ID format')
 		}
 
 		if (!Types.ObjectId.isValid(commentId)) {
-			throw new RouteError('Invalid comment ID')
+			throw new RouteError('Invalid ID format')
 		}
 
 		const route = await this.findById(routeId)
@@ -203,19 +214,30 @@ export class RouteService extends BaseService<IRoute> {
 		return updatedRoute
 	}
 
-	async getRoutesByUser(userId: string, page = 1, limit = 10) {
+	async getRoutesByUser(
+		userId: string,
+		page: number = 1,
+		limit: number = 10
+	): Promise<{ data: IRoute[]; total: number; pages: number }> {
 		if (!Types.ObjectId.isValid(userId)) {
-			throw new RouteError('Invalid user ID')
+			throw new RouteError('Invalid ID format')
 		}
 
-		return this.findWithPagination(
-			{ creator: new Types.ObjectId(userId) },
-			page,
-			limit,
-			{
-				sort: { createdAt: -1 },
-			}
-		)
+		const skip = (page - 1) * limit
+		const query = { creator: new Types.ObjectId(userId) }
+		const total = await this.model.countDocuments(query)
+		const pages = Math.ceil(total / limit)
+
+		const routes = await this.model
+			.find(query)
+			.sort({ createdAt: -1 })
+			.skip(skip)
+			.limit(limit)
+			.populate('creator', 'name username profilePicture')
+			.populate('likes', 'name username profilePicture')
+			.exec()
+
+		return { data: routes, total, pages }
 	}
 
 	async searchRoutes(query: string, page = 1, limit = 10) {
@@ -290,32 +312,21 @@ export class RouteService extends BaseService<IRoute> {
 
 	async getRoute(routeId: string): Promise<IRoute> {
 		if (!Types.ObjectId.isValid(routeId)) {
-			throw new RouteError('Invalid route ID')
+			throw new Error('Invalid ID format')
 		}
-
 		const route = await this.model
 			.findById(routeId)
-			.populate({
-				path: 'creator',
-				select: 'name username profilePicture',
-				model: 'User',
-			})
-			.populate({
-				path: 'likes',
-				select: 'name username profilePicture',
-				model: 'User',
-			})
+			.populate('creator', 'name username profilePicture')
+			.populate('likes', 'name username profilePicture')
 			.populate({
 				path: 'comments.user',
 				select: 'name username profilePicture',
 				model: 'User',
 			})
 			.exec()
-
 		if (!route) {
-			throw new RouteError('Route not found')
+			throw new Error('Route not found')
 		}
-
 		return route
 	}
 }
