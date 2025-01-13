@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
-import { Menu, MessageSquare } from 'lucide-react'
+import { Menu, MessageSquare, User } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { authApi } from '@/services'
 import { toast } from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
 	Sheet,
 	SheetContent,
@@ -11,9 +12,17 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from '@/components/ui/sheet'
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export function Navbar() {
-	const { isAuthenticated, setUser } = useAuthStore()
+	const { isAuthenticated, user, setUser } = useAuthStore()
 
 	const handleLogout = async () => {
 		try {
@@ -25,21 +34,48 @@ export function Navbar() {
 		}
 	}
 
+	const UserMenu = () => (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button variant='ghost' className='flex items-center gap-2'>
+					<Avatar className='h-8 w-8'>
+						<AvatarImage src={user?.profilePicture} />
+						<AvatarFallback>
+							{user?.name?.[0] || <User className='h-4 w-4' />}
+						</AvatarFallback>
+					</Avatar>
+					<span className='hidden md:inline'>{user?.name}</span>
+				</Button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align='end' className='w-56'>
+				<DropdownMenuLabel>
+					<div className='flex flex-col'>
+						<span>{user?.name}</span>
+						<span className='text-sm text-muted-foreground'>
+							@{user?.username}
+						</span>
+					</div>
+				</DropdownMenuLabel>
+				<DropdownMenuSeparator />
+				<Link to='/profile'>
+					<DropdownMenuItem>Profile</DropdownMenuItem>
+				</Link>
+				<DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+			</DropdownMenuContent>
+		</DropdownMenu>
+	)
+
 	const NavItems = () => (
 		<>
 			{isAuthenticated ? (
 				<>
-					<Link to='/profile'>
-						<Button variant='ghost'>Profile</Button>
-					</Link>
 					<Link to='/chat'>
-						<Button variant='ghost' size='icon'>
+						<Button variant='ghost' className='flex items-center gap-2'>
 							<MessageSquare className='h-5 w-5' />
+							<span className='hidden md:inline'>Messages</span>
 						</Button>
 					</Link>
-					<Button onClick={handleLogout} variant='ghost'>
-						Logout
-					</Button>
+					<UserMenu />
 				</>
 			) : (
 				<>
@@ -62,7 +98,7 @@ export function Navbar() {
 				</Link>
 
 				{/* Desktop Navigation */}
-				<div className='hidden space-x-4 md:flex'>
+				<div className='hidden space-x-2 md:flex items-center'>
 					<NavItems />
 				</div>
 
