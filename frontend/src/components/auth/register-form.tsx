@@ -42,7 +42,7 @@ export function RegisterForm() {
 			toast.success(
 				`Welcome ${user.name}! Your account has been created successfully.`
 			)
-			navigate('/login')
+			navigate('/')
 		},
 		onError: (error) => {
 			if (error instanceof Error) {

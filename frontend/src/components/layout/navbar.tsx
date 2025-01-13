@@ -21,8 +21,10 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ModeToggle } from '@/components/layout/mode-toggle'
+import { useNavigate } from 'react-router-dom'
 
 export function Navbar() {
+	const navigate = useNavigate()
 	const { isAuthenticated, user, setUser } = useAuthStore()
 
 	const handleLogout = async () => {
@@ -30,6 +32,7 @@ export function Navbar() {
 			await authApi.logout()
 			setUser(null)
 			toast.success('Logged out successfully')
+			navigate('/login')
 		} catch {
 			toast.error('Failed to logout')
 		}
