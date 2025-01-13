@@ -9,6 +9,12 @@ import { RoutePreviewMap } from '@/components/maps/route-preview-map'
 import { useRouteLike } from '../hooks/use-route-like'
 import { useRouteStats } from '../hooks/use-route-stats'
 import { useRouteBookmark } from '../hooks/use-route-bookmark'
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY
 
@@ -43,16 +49,71 @@ export function RouteCard({ route }: RouteCardProps) {
 					<div className='absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity' />
 				</div>
 				<CardHeader className='flex flex-row items-center gap-4 pt-4'>
-					<Avatar className='h-10 w-10'>
-						<AvatarImage src={route.creator?.profilePicture} />
-						<AvatarFallback>{route.creator?.name?.[0] || '?'}</AvatarFallback>
-					</Avatar>
+					<TooltipProvider>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Link
+									to={`/profile/${route.creator?.username}`}
+									onClick={(e) => e.stopPropagation()}
+									className='hover:opacity-80 transition-opacity'
+								>
+									<Avatar className='h-10 w-10'>
+										<AvatarImage src={route.creator?.profilePicture} />
+										<AvatarFallback>
+											{route.creator?.name?.[0] || '?'}
+										</AvatarFallback>
+									</Avatar>
+								</Link>
+							</TooltipTrigger>
+							<TooltipContent className='flex items-center gap-3 p-3'>
+								<Avatar className='h-12 w-12'>
+									<AvatarImage src={route.creator?.profilePicture} />
+									<AvatarFallback>
+										{route.creator?.name?.[0] || '?'}
+									</AvatarFallback>
+								</Avatar>
+								<div className='flex flex-col'>
+									<span className='font-medium'>{route.creator?.name}</span>
+									<span className='text-sm text-muted-foreground'>
+										@{route.creator?.username}
+									</span>
+								</div>
+							</TooltipContent>
+						</Tooltip>
+					</TooltipProvider>
 					<div className='flex-1'>
 						<h3 className='font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors'>
 							{route.title}
 						</h3>
 						<p className='text-sm text-muted-foreground'>
-							by {route.creator?.name}
+							by{' '}
+							<TooltipProvider>
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Link
+											to={`/profile/${route.creator?.username}`}
+											className='hover:text-primary hover:underline transition-colors'
+											onClick={(e) => e.stopPropagation()}
+										>
+											{route.creator?.name}
+										</Link>
+									</TooltipTrigger>
+									<TooltipContent className='flex items-center gap-3 p-3'>
+										<Avatar className='h-12 w-12'>
+											<AvatarImage src={route.creator?.profilePicture} />
+											<AvatarFallback>
+												{route.creator?.name?.[0] || '?'}
+											</AvatarFallback>
+										</Avatar>
+										<div className='flex flex-col'>
+											<span className='font-medium'>{route.creator?.name}</span>
+											<span className='text-sm text-muted-foreground'>
+												@{route.creator?.username}
+											</span>
+										</div>
+									</TooltipContent>
+								</Tooltip>
+							</TooltipProvider>
 						</p>
 					</div>
 				</CardHeader>
