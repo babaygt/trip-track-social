@@ -27,11 +27,11 @@ export const RouteDetails: React.FC<RouteDetailsProps> = ({
 	)
 
 	return (
-		<div className='mt-4 p-4 bg-gray-100 rounded-md space-y-2'>
-			<p className='font-semibold'>Route Summary:</p>
-			<p>Total Distance: {totalDistance} km</p>
-			<p>Total Duration: {totalDuration} minutes</p>
-			<p>
+		<div className='mt-4 p-4 bg-background rounded-md space-y-2'>
+			<p className='font-semibold text-foreground'>Route Summary:</p>
+			<p className='text-foreground'>Total Distance: {totalDistance} km</p>
+			<p className='text-foreground'>Total Duration: {totalDuration} minutes</p>
+			<p className='text-foreground'>
 				Travel Mode:{' '}
 				{TRAVEL_MODES.find((mode) => mode.value === travelMode)?.label}
 			</p>
