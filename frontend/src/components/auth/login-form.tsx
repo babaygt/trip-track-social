@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { PasswordInput } from '@/components/ui/password-input'
 
 export function LoginForm() {
 	const navigate = useNavigate()
@@ -84,7 +85,7 @@ export function LoginForm() {
 								<FormItem>
 									<FormLabel>Password</FormLabel>
 									<FormControl>
-										<Input type='password' {...field} />
+										<PasswordInput {...field} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>

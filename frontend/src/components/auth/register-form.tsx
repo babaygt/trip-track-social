@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { PasswordInput } from '@/components/ui/password-input'
 
 export function RegisterForm() {
 	const navigate = useNavigate()
@@ -117,7 +118,7 @@ export function RegisterForm() {
 								<FormItem>
 									<FormLabel>Password</FormLabel>
 									<FormControl>
-										<Input type='password' {...field} />
+										<PasswordInput {...field} />
 									</FormControl>
 									<FormMessage />
 								</FormItem>
