@@ -4,6 +4,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { Toaster } from 'react-hot-toast'
 import { routes } from './routes'
 import { RootLayout } from './components/layout/root-layout'
+import { ThemeProvider } from '@/components/theme-provider'
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -23,11 +24,13 @@ const router = createBrowserRouter([
 
 function App() {
 	return (
-		<QueryClientProvider client={queryClient}>
-			<RouterProvider router={router} />
-			<Toaster position='top-right' toastOptions={{ duration: 4000 }} />
-			<ReactQueryDevtools initialIsOpen={false} />
-		</QueryClientProvider>
+		<ThemeProvider>
+			<QueryClientProvider client={queryClient}>
+				<RouterProvider router={router} />
+				<Toaster position='top-right' toastOptions={{ duration: 4000 }} />
+				<ReactQueryDevtools initialIsOpen={false} />
+			</QueryClientProvider>
+		</ThemeProvider>
 	)
 }
 

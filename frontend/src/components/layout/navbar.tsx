@@ -20,6 +20,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ModeToggle } from '@/components/layout/mode-toggle'
 
 export function Navbar() {
 	const { isAuthenticated, user, setUser } = useAuthStore()
@@ -75,6 +76,7 @@ export function Navbar() {
 							<span className='hidden md:inline'>Messages</span>
 						</Button>
 					</Link>
+					<ModeToggle />
 					<UserMenu />
 				</>
 			) : (
