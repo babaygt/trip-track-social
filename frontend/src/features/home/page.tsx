@@ -24,9 +24,7 @@ export default function HomePage() {
 					</Link>
 				</div>
 
-				<div className='max-w-6xl mx-auto'>
-					<RouteFeed />
-				</div>
+				<RouteFeed />
 			</div>
 		</div>
 	)
