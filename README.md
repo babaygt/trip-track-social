@@ -178,7 +178,7 @@ For detailed architecture documentation, see our [Architecture Overview](docs/AR
 
 ### API Endpoints
 
-Detailed documentation of the API endpoints can be found [here](http://localhost:8080/api-docs). It is generated with Swagger.
+Detailed documentation of the API endpoints can be found [here](https://trip-track-backend-33100767116.europe-west3.run.app/api-docs/). It is generated with Swagger.
 
 #### Swagger Template
 
