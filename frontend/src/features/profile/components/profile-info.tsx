@@ -9,8 +9,10 @@ interface ProfileInfoProps {
 export function ProfileInfo({ user }: ProfileInfoProps) {
 	return (
 		<div className='px-4 space-y-2'>
-			{user.bio && <p className='text-sm'>{user.bio}</p>}
-			<div className='flex items-center gap-2 text-sm text-muted-foreground'>
+			{user.bio && (
+				<p className='text-sm text-center sm:text-left'>{user.bio}</p>
+			)}
+			<div className='flex items-center justify-center sm:justify-start gap-2 text-sm text-muted-foreground'>
 				<Calendar className='h-4 w-4' />
 				<span>
 					{user.createdAt

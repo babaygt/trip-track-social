@@ -8,7 +8,7 @@ interface ProfileStatsProps {
 export function ProfileStats({ user }: ProfileStatsProps) {
 	return (
 		<div className='px-4 py-3'>
-			<div className='flex gap-4 text-sm'>
+			<div className='flex justify-center sm:justify-start gap-4 text-sm'>
 				<ConnectionsDialog
 					user={user}
 					defaultTab='following'

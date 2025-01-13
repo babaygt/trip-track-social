@@ -26,8 +26,8 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
 	}
 
 	return (
-		<div className='flex items-center justify-between p-4'>
-			<div className='flex items-center gap-4'>
+		<div className='flex flex-col gap-4 p-4'>
+			<div className='flex flex-col items-center justify-center sm:flex-row sm:items-center gap-4'>
 				<Avatar className='h-20 w-20'>
 					{user.profilePicture ? (
 						<AvatarImage src={user.profilePicture} alt={user.name} />
@@ -37,32 +37,44 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
 						</AvatarFallback>
 					)}
 				</Avatar>
-				<div>
+				<div className='flex-1 text-center sm:text-left'>
 					<h1 className='text-2xl font-bold'>{user.name}</h1>
 					<p className='text-sm text-muted-foreground'>@{user.username}</p>
 				</div>
-			</div>
-			<div className='flex items-center gap-2'>
-				{isOwnProfile ? (
-					<Button variant='outline' size='sm' asChild>
-						<Link to='/profile/edit'>Edit profile</Link>
-					</Button>
-				) : (
-					currentUser && (
-						<>
-							<Button
-								variant={isFollowing ? 'outline' : 'default'}
-								size='sm'
-								onClick={handleFollow}
-							>
-								{isFollowing ? 'Unfollow' : 'Follow'}
-							</Button>
-							<Button variant='outline' size='sm' onClick={handleMessage}>
-								<MessageSquare className='h-4 w-4' />
-							</Button>
-						</>
-					)
-				)}
+				<div className='flex flex-col sm:flex-row gap-2 w-full sm:w-auto'>
+					{isOwnProfile ? (
+						<Button
+							variant='outline'
+							size='sm'
+							className='w-full sm:w-auto'
+							asChild
+						>
+							<Link to='/profile/edit'>Edit profile</Link>
+						</Button>
+					) : (
+						currentUser && (
+							<>
+								<Button
+									variant={isFollowing ? 'outline' : 'default'}
+									size='sm'
+									onClick={handleFollow}
+									className='w-full sm:w-auto'
+								>
+									{isFollowing ? 'Unfollow' : 'Follow'}
+								</Button>
+								<Button
+									variant='secondary'
+									size='sm'
+									onClick={handleMessage}
+									className='w-full sm:w-auto gap-2'
+								>
+									<MessageSquare className='h-4 w-4' />
+									<span>Message</span>
+								</Button>
+							</>
+						)
+					)}
+				</div>
 			</div>
 		</div>
 	)
