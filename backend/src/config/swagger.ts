@@ -9,17 +9,21 @@ const options: swaggerJsdoc.Options = {
 			description: 'API documentation for Trip Track application',
 			contact: {
 				name: 'API Support',
-				email: 'support@triptrack.com',
+				email: 'yigitbaba.contact@gmail.com',
 			},
 			license: {
 				name: 'MIT',
-				url: 'https://opensource.org/licenses/MIT',
+				url: 'https://github.com/babaygt/trip-track-social/blob/main/LICENSE',
 			},
 		},
 		servers: [
 			{
 				url: 'http://localhost:8080',
 				description: 'Development server (Docker)',
+			},
+			{
+				url: process.env.CLOUD_RUN_URL || 'https://your-app-name.run.app',
+				description: 'Production server (Google Cloud Run)',
 			},
 		],
 		components: {
