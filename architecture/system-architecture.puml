@@ -1,0 +1,100 @@
+@startuml TripTrack-System-Architecture
+
+!define RECTANGLE class
+
+' Style configurations
+skinparam componentStyle rectangle
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+package "Frontend (React SPA)" {
+  [React Application] as frontend
+  [React Query] as reactQuery
+  [Zustand Store] as zustand
+  [Maps Integration] as maps
+  [UI Components] as ui
+  [UploadThing Client] as uploadClient
+}
+
+package "Backend Services" {
+  [Express API Server] as api
+  [Auth Service] as auth
+  [Route Service] as routeService
+  [User Service] as userService
+  [Message Service] as messageService
+  [Conversation Service] as conversationService
+  [Upload Service] as uploadService
+}
+
+database "MongoDB" {
+  [Users Collection] as userDB
+  [Routes Collection] as routeDB
+  [Messages Collection] as messageDB
+  [Conversations Collection] as convoDB
+}
+
+cloud "External Services" {
+  [Google Maps API] as googleMaps
+  [UploadThing API] as uploadThing
+}
+
+' Frontend internal connections
+frontend --> reactQuery
+frontend --> zustand
+frontend --> maps
+frontend --> ui
+frontend --> uploadClient
+
+' Frontend to Backend connections
+reactQuery --> api : HTTP/REST
+uploadClient --> uploadService : File Upload
+
+' Backend service connections
+api --> auth
+api --> routeService
+api --> userService
+api --> messageService
+api --> conversationService
+api --> uploadService
+
+' Database connections
+userService --> userDB
+routeService --> routeDB
+messageService --> messageDB
+conversationService --> convoDB
+conversationService --> messageDB
+
+' External service connections
+maps --> googleMaps
+routeService --> googleMaps
+uploadService --> uploadThing
+uploadClient --> uploadThing
+
+' Add notes
+note right of frontend
+  Single Page Application
+  built with React & TypeScript
+end note
+
+note right of api
+  RESTful API with
+  OpenAPI/Swagger docs
+end note
+
+note right of messageService
+  Currently: REST-based messaging
+  Future: WebSocket implementation
+  for real-time chat
+end note
+
+note right of routeDB
+  Includes embedded
+  comments collection
+end note
+
+note right of uploadThing
+  Secure file storage
+  and image hosting
+end note
+
+@enduml 
