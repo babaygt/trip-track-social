@@ -31,10 +31,10 @@ export default function RoutePostPage() {
 	}
 
 	return (
-		<div className='min-h-screen bg-gray-50'>
+		<div className='min-h-screen bg-background'>
 			<div className='max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-6'>
 				<RouteCard route={route} />
-				<div className='bg-white rounded-lg shadow p-6'>
+				<div className='bg-background rounded-lg shadow p-6'>
 					<CommentList route={route} onCommentUpdate={handleCommentUpdate} />
 				</div>
 			</div>

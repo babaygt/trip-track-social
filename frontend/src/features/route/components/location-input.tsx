@@ -75,11 +75,11 @@ export const LocationInput: React.FC<LocationInputProps> = ({
 	return (
 		<div className='w-full space-y-2'>
 			{label && <FormLabel>{label}</FormLabel>}
-			<div className='relative flex items-center gap-2'>
+			<div className='relative flex items-center gap-2 bg-background'>
 				<input
 					ref={inputRef}
 					id={inputId}
-					className='w-full p-2 border rounded-md'
+					className='w-full p-2 border rounded-md bg-background text-foreground'
 					placeholder={placeholder}
 					type='text'
 					value={inputValue}
