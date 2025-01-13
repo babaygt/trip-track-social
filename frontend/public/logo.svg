@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background Circle -->
+    <circle cx="256" cy="256" r="248" fill="#1a1a1a" stroke="#4F46E5" stroke-width="16"/>
+    
+    <!-- Route Path -->
+    <path d="M128 256 Q 192 128, 256 256 T 384 256" 
+          stroke="#4F46E5" 
+          stroke-width="24" 
+          stroke-linecap="round"
+          fill="none"/>
+    
+    <!-- Start Point -->
+    <circle cx="128" cy="256" r="24" fill="#22C55E"/>
+    
+    <!-- End Point -->
+    <circle cx="384" cy="256" r="24" fill="#EF4444"/>
+    
+    <!-- Middle Point -->
+    <circle cx="256" cy="256" r="16" fill="#4F46E5"/>
+</svg> 
