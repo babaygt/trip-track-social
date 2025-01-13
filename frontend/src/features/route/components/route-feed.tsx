@@ -14,8 +14,18 @@ export function RouteFeed() {
 			},
 		})
 
-	if (status === 'pending') return <div>Loading...</div>
-	if (status === 'error') return <div>Error loading routes</div>
+	if (status === 'pending')
+		return (
+			<div className='text-center text-foreground h-screen flex items-center justify-center'>
+				Loading...
+			</div>
+		)
+	if (status === 'error')
+		return (
+			<div className='text-center text-foreground h-screen flex items-center justify-center'>
+				Error loading routes
+			</div>
+		)
 
 	return (
 		<div className='max-w-7xl mx-auto'>

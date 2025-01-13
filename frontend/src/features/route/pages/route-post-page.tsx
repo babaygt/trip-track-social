@@ -23,11 +23,19 @@ export default function RoutePostPage() {
 	}
 
 	if (isLoading) {
-		return <div>Loading...</div>
+		return (
+			<div className='text-center text-foreground h-screen flex items-center justify-center'>
+				Loading...
+			</div>
+		)
 	}
 
 	if (error || !route) {
-		return <div>Error loading route</div>
+		return (
+			<div className='text-center text-foreground h-screen flex items-center justify-center'>
+				Error loading route
+			</div>
+		)
 	}
 
 	return (

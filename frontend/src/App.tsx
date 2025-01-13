@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast'
 import { routes } from './routes'
 import { RootLayout } from './components/layout/root-layout'
 import { ThemeProvider } from '@/components/theme-provider'
+import { ErrorPage } from '@/components/error/error-page'
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -19,6 +20,7 @@ const router = createBrowserRouter([
 	{
 		element: <RootLayout />,
 		children: routes,
+		errorElement: <ErrorPage />,
 	},
 ])
 

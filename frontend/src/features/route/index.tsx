@@ -87,7 +87,7 @@ const MapContent = () => {
 
 	if (!user) {
 		return (
-			<div className='min-h-[400px] flex flex-col items-center justify-center p-8 space-y-6 bg-gradient-to-b from-background to-muted rounded-lg shadow-lg'>
+			<div className='h-screen flex flex-col items-center justify-center p-8 space-y-6 bg-gradient-to-b from-background to-muted rounded-lg shadow-lg'>
 				<div className='relative'>
 					<div className='absolute -inset-1 bg-gradient-to-r from-primary to-secondary blur opacity-30 rounded-lg'></div>
 					<div className='relative bg-background p-6 rounded-lg shadow-xl'>
