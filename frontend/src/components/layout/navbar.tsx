@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Menu, MessageSquare, User } from 'lucide-react'
+import { LogOut, Menu, MessageSquare, User } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth-store'
 import { authApi } from '@/services'
 import { toast } from 'react-hot-toast'
@@ -109,17 +109,79 @@ export function Navbar() {
 
 				{/* Mobile Navigation */}
 				<Sheet>
-					<SheetTrigger asChild className='md:hidden'>
-						<Button variant='ghost' size='icon'>
-							<Menu className='h-6 w-6' />
-						</Button>
-					</SheetTrigger>
+					<div className='flex items-center gap-2 md:hidden'>
+						<div className='flex items-center gap-2'>
+							<ModeToggle />
+						</div>
+						<SheetTrigger asChild className='md:hidden'>
+							<Button variant='ghost' size='icon'>
+								<Menu className='h-6 w-6' />
+							</Button>
+						</SheetTrigger>
+					</div>
 					<SheetContent>
-						<SheetHeader>
-							<SheetTitle>Trip Track</SheetTitle>
+						<SheetHeader className='border-b pb-4 mb-4'>
+							<SheetTitle>Menu</SheetTitle>
 						</SheetHeader>
-						<div className='mt-4 flex flex-col space-y-4'>
-							<NavItems />
+						<div className='flex flex-col space-y-3'>
+							{isAuthenticated ? (
+								<>
+									<div className='flex items-center gap-3 p-2 mb-2 bg-secondary rounded-lg'>
+										<Avatar className='h-10 w-10'>
+											<AvatarImage src={user?.profilePicture} />
+											<AvatarFallback>
+												{user?.name?.[0] || <User className='h-4 w-4' />}
+											</AvatarFallback>
+										</Avatar>
+										<div className='flex flex-col text-secondary-foreground'>
+											<span className='font-medium'>{user?.name}</span>
+											<span className='text-sm text-muted-foreground'>
+												@{user?.username}
+											</span>
+										</div>
+									</div>
+									<Link to='/profile' className='w-full'>
+										<Button
+											variant='secondary'
+											className='w-full justify-start gap-2'
+										>
+											<User className='h-5 w-5' />
+											Profile
+										</Button>
+									</Link>
+									<Link to='/chat' className='w-full'>
+										<Button
+											variant='secondary'
+											className='w-full justify-start gap-2'
+										>
+											<MessageSquare className='h-5 w-5' />
+											Messages
+										</Button>
+									</Link>
+
+									<Button
+										variant='destructive'
+										className='w-full justify-start gap-2'
+										onClick={handleLogout}
+									>
+										<LogOut className='h-5 w-5' />
+										Logout
+									</Button>
+								</>
+							) : (
+								<>
+									<Link to='/login' className='w-full'>
+										<Button variant='default' className='w-full'>
+											Login
+										</Button>
+									</Link>
+									<Link to='/register' className='w-full'>
+										<Button variant='outline' className='w-full'>
+											Register
+										</Button>
+									</Link>
+								</>
+							)}
 						</div>
 					</SheetContent>
 				</Sheet>
