@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { authApi } from '@/services'
 import { useAuthStore } from '@/stores/auth-store'
 import { registerSchema, type RegisterInput } from '@/lib/validations/auth'
@@ -17,7 +17,13 @@ import {
 	FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import {
+	Card,
+	CardHeader,
+	CardTitle,
+	CardContent,
+	CardFooter,
+} from '@/components/ui/card'
 import { PasswordInput } from '@/components/ui/password-input'
 
 export function RegisterForm() {
@@ -149,6 +155,17 @@ export function RegisterForm() {
 					</form>
 				</Form>
 			</CardContent>
+			<CardFooter className='flex flex-col items-center space-y-2'>
+				<p className='text-sm text-muted-foreground'>
+					Already have an account?
+				</p>
+				<Link
+					to='/login'
+					className='text-sm font-medium text-primary hover:underline'
+				>
+					Login here
+				</Link>
+			</CardFooter>
 		</Card>
 	)
 }
