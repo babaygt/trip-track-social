@@ -78,10 +78,10 @@ const messageService = new MessageService()
  *                 description: ID of the conversation
  *               senderId:
  *                 type: string
- *                 description: ID of the user sending the message
+ *                 description: ID of the message sender
  *               content:
  *                 type: string
- *                 description: Content of the message
+ *                 description: Message content
  *     responses:
  *       201:
  *         description: Message created successfully
@@ -90,7 +90,7 @@ const messageService = new MessageService()
  *             schema:
  *               $ref: '#/components/schemas/Message'
  *       400:
- *         description: Invalid request
+ *         description: Invalid input
  *       401:
  *         description: Unauthorized
  */
@@ -114,7 +114,7 @@ router.post('/', async (req: Request, res: Response) => {
  * @swagger
  * /messages/{messageId}/read/{userId}:
  *   put:
- *     summary: Mark a message as read by a user
+ *     summary: Mark a message as read
  *     tags: [Messages]
  *     security:
  *       - sessionAuth: []
@@ -130,7 +130,7 @@ router.post('/', async (req: Request, res: Response) => {
  *         required: true
  *         schema:
  *           type: string
- *         description: ID of the user who read the message
+ *         description: ID of the user marking the message as read
  *     responses:
  *       200:
  *         description: Message marked as read successfully
@@ -176,17 +176,20 @@ router.put('/:messageId/read/:userId', async (req: Request, res: Response) => {
  *         name: page
  *         schema:
  *           type: integer
+ *           minimum: 1
  *           default: 1
- *         description: Page number
+ *         description: Page number for pagination
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
+ *           minimum: 1
+ *           maximum: 100
  *           default: 50
  *         description: Number of messages per page
  *     responses:
  *       200:
- *         description: List of messages
+ *         description: List of messages retrieved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -196,6 +199,10 @@ router.put('/:messageId/read/:userId', async (req: Request, res: Response) => {
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Message'
+ *                 page:
+ *                   type: integer
+ *                 limit:
+ *                   type: integer
  *                 total:
  *                   type: integer
  *                 pages:

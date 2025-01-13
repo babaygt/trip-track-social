@@ -77,8 +77,8 @@ const conversationService = new ConversationService()
  *                 type: array
  *                 items:
  *                   type: string
- *                 description: Array of user IDs to include in the conversation
  *                 minItems: 2
+ *                 description: Array of user IDs participating in the conversation
  *     responses:
  *       201:
  *         description: Conversation created successfully
@@ -87,7 +87,7 @@ const conversationService = new ConversationService()
  *             schema:
  *               $ref: '#/components/schemas/Conversation'
  *       400:
- *         description: Invalid request or insufficient participants
+ *         description: Invalid input or insufficient participants
  *       401:
  *         description: Unauthorized
  */
@@ -119,22 +119,25 @@ router.post('/', async (req: Request, res: Response) => {
  *         required: true
  *         schema:
  *           type: string
- *         description: ID of the user whose conversations to retrieve
+ *         description: ID of the user
  *       - in: query
  *         name: page
  *         schema:
  *           type: integer
+ *           minimum: 1
  *           default: 1
- *         description: Page number
+ *         description: Page number for pagination
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
- *           default: 20
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 50
  *         description: Number of conversations per page
  *     responses:
  *       200:
- *         description: List of conversations
+ *         description: List of conversations retrieved successfully
  *         content:
  *           application/json:
  *             schema:
@@ -144,14 +147,16 @@ router.post('/', async (req: Request, res: Response) => {
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Conversation'
+ *                 page:
+ *                   type: integer
+ *                 limit:
+ *                   type: integer
  *                 total:
  *                   type: integer
  *                 pages:
  *                   type: integer
  *       400:
  *         description: Invalid request
- *       401:
- *         description: Unauthorized
  *       404:
  *         description: User not found
  */

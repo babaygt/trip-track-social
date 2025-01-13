@@ -1,6 +1,35 @@
 # Trip Track
 
-Trip Track is a full-stack web application that allows users to create, share, and discover travel routes. Users can plan their journeys using interactive maps, share their routes with others, and engage with the community through comments and likes.
+Trip Track is a full-stack web application that allows users to create, share, and discover travel routes. Users can plan their journeys using interactive maps, share their routes with others, and engage with the community through comments, likes, and chat.
+
+## 📚 Documentation Overview
+
+- **[API Documentation](http://localhost:8080/api-docs)** - Interactive OpenAPI/Swagger documentation
+- **[Data Models](docs/DATA_DOCUMENTATION.md)** - Detailed documentation of data structures and relationships
+- **[Architecture Overview](docs/ARCHITECTURE.md)** - System architecture and design decisions
+- **[Contributing Guide](docs/CONTRIBUTING.md)** - Guidelines for contributing to the project
+- **[Development Guide](docs/DEVELOPMENT.md)** - Setup and development workflow
+
+## 🎯 Key Features
+
+- **Route Planning & Sharing:**
+
+  - Interactive map-based route creation
+  - Multiple travel modes (driving, cycling, walking, transit)
+  - Route visibility controls and sharing options
+
+- **Social Features:**
+
+  - User profiles and following system
+  - Route comments and likes
+  - Real-time chat between users
+  - Route bookmarking
+
+- **Developer Experience:**
+  - Interactive API documentation with Swagger UI
+  - Comprehensive data models and type safety
+  - Modern development stack with hot reloading
+  - Docker support for easy deployment
 
 ## 🚀 Tech Stack
 
@@ -11,6 +40,7 @@ Trip Track is a full-stack web application that allows users to create, share, a
 - **TanStack Query** for data fetching
 - **Tailwind CSS** with **shadcn/ui** components
 - **Google Maps API** (@vis.gl/react-google-maps)
+- **UploadThing** for file uploads
 - **Zustand** for state management
 - **React Router** for navigation
 - **React Hook Form** with **Zod** validation
@@ -23,19 +53,26 @@ Trip Track is a full-stack web application that allows users to create, share, a
 - **Jest** for testing
 - **Express Session** for authentication
 - **Express Validator** for request validation
+- **UploadThing** for file uploads
 
 ## 🏗️ Architecture
 
-The project follows a modern client-server architecture with a clear separation of concerns:
+Trip Track follows a modern client-server architecture with:
 
-![Architecture Diagram](architecture/class-diagram.png)
+- **Frontend:** React-based SPA with TypeScript
+- **Backend:** Express.js REST API with OpenAPI documentation
+- **Database:** MongoDB with Mongoose ODM
+- **Real-time:** WebSocket-based chat system (not implemented yet)
+- **Authentication:** Session-based with secure cookie handling
+
+For detailed architecture documentation, see our [Architecture Overview](docs/ARCHITECTURE.md).
 
 ### Domain Models
 
 - **Users** with authentication and social features
 - **Routes** with waypoints and travel modes
 - **Comments** and messaging system
-- **Real-time updates** for messages
+- **Real-time updates** for messages (not implemented yet)
 
 ## 🚦 Getting Started
 
@@ -52,7 +89,7 @@ The project follows a modern client-server architecture with a clear separation 
 
    ```bash
    git clone https://github.com/babaygt/trip-track-social.git
-   cd trip-track
+   cd trip-track-social
    ```
 
 2. **Install dependencies:**
@@ -78,7 +115,7 @@ The project follows a modern client-server architecture with a clear separation 
      Create a `.env` file in the `frontend` directory and add the following variables:
 
      ```env
-     VITE_API_URL=http://localhost:3000/api
+     VITE_API_URL=http://localhost:8080/
      VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
      ```
 
@@ -87,9 +124,13 @@ The project follows a modern client-server architecture with a clear separation 
      Create a `.env` file in the `backend` directory and add the following variables:
 
      ```env
-     PORT=3000
-     MONGODB_URI=mongodb://localhost:27017/triptrack
+     PORT=8080
+     MONGODB_URI=your_mongodb_uri
      SESSION_SECRET=your_session_secret
+     UPLOADTHING_SECRET=your_uploadthing_secret_key_here
+     UPLOADTHING_APP_ID=your_uploadthing_app_id_here
+     UPLOADTHING_TOKEN=your_uploadthing_token_here
+     CLIENT_URL=http://localhost:5173
      ```
 
 4. **Run the Application:**
@@ -122,7 +163,7 @@ The project follows a modern client-server architecture with a clear separation 
 
 5. **Access the Application:**
 
-   Open your browser and navigate to `http://localhost:5173` to access the frontend and `http://localhost:3000` for the backend API.
+   Open your browser and navigate to `http://localhost:5173` to access the frontend and `http://localhost:8080` for the backend API.
 
 ## 🧪 Running Tests
 
@@ -137,11 +178,23 @@ The project follows a modern client-server architecture with a clear separation 
 
 ### API Endpoints
 
-Detailed documentation of the API endpoints can be found [here](docs/API_Documentation.md).
+Detailed documentation of the API endpoints can be found [here](http://localhost:8080/api-docs). It is generated with Swagger.
+
+#### Swagger Template
+
+You can use the Swagger template to generate your own API documentation. You can find the template [here](docs/SWAGGER_TEMPLATE.md).
 
 ### Data Documentation
 
 Detailed documentation of the data models can be found [here](docs/DATA_DOCUMENTATION.md).
+
+### Development Guide
+
+Detailed documentation of the development guide can be found [here](docs/DEVELOPMENT.md).
+
+### Architecture
+
+Detailed documentation of the architecture can be found [here](docs/ARCHITECTURE.md).
 
 ### Component Library
 
@@ -159,12 +212,13 @@ The frontend utilizes **shadcn/ui** components. Refer to the [component library 
   - Create, edit, and delete travel routes.
   - Add waypoints with different travel modes.
   - Set visibility levels for routes.
+  - Share routes with others.
 
 - **Social Interaction:**
 
   - Comment on routes.
   - Like and bookmark favorite routes.
-  - Real-time messaging between users.
+  - Messaging between users.
 
 - **Interactive Maps:**
   - Plan journeys using Google Maps integration.
@@ -172,29 +226,7 @@ The frontend utilizes **shadcn/ui** components. Refer to the [component library 
 
 ## 🛠️ Contributing
 
-Contributions are welcome! Please follow these steps:
-
-1. **Fork the repository.**
-
-2. **Create a new branch:**
-
-   ```bash
-   git checkout -b feature/YourFeature
-   ```
-
-3. **Make your changes and commit them:**
-
-   ```bash
-   git commit -m "Add some feature"
-   ```
-
-4. **Push to the branch:**
-
-   ```bash
-   git push origin feature/YourFeature
-   ```
-
-5. **Open a Pull Request.**
+For contributing to the project, please follow the [Contributing Guide](docs/CONTRIBUTING.md).
 
 ## 📝 License
 
