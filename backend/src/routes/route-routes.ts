@@ -593,4 +593,74 @@ router.get('/', async (req: Request, res: Response) => {
 	}
 })
 
+/**
+ * @swagger
+ * /routes/find/{routeId}:
+ *   get:
+ *     summary: Get a route by ID
+ *     tags: [Routes]
+ *     parameters:
+ *       - in: path
+ *         name: routeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the route to retrieve
+ *     responses:
+ *       200:
+ *         description: Route found successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Route'
+ *       404:
+ *         description: Route not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Route not found
+ *       400:
+ *         description: Invalid route ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid ID format
+ */
+
+// Get route by ID
+router.get('/find/:routeId', async (req: Request, res: Response) => {
+	try {
+		const route = await routeService.getRoute(req.params.routeId)
+		if (!route) {
+			return res.status(404).json({ message: 'Route not found' })
+		}
+		res.json(route)
+	} catch (error) {
+		let errorMessage = 'An unknown error occurred'
+		let statusCode = 400
+		if (error instanceof Error) {
+			if (error.message === 'Route not found') {
+				statusCode = 404
+				errorMessage = error.message
+			} else if (
+				error.name === 'CastError' ||
+				error.message === 'Invalid ID format'
+			) {
+				errorMessage = 'Invalid ID format'
+			} else {
+				errorMessage = error.message
+			}
+		}
+		res.status(statusCode).json({ message: errorMessage })
+	}
+})
+
 export default router
