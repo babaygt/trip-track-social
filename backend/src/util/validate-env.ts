@@ -8,4 +8,5 @@ export default cleanEnv(process.env, {
 	UPLOADTHING_SECRET: str(),
 	UPLOADTHING_APP_ID: str(),
 	UPLOADTHING_TOKEN: str(),
+	CLOUD_RUN_URL: str(),
 })
