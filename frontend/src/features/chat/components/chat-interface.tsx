@@ -6,7 +6,9 @@ import { useMessages } from '../hooks/use-messages'
 import type { Conversation } from '@/services/conversation'
 import { Sheet, SheetContent } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
-import { Menu } from 'lucide-react'
+import { ChevronLeft, Menu } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { getInitials } from '@/lib/utils'
 
 export function ChatInterface() {
 	const [selectedConversation, setSelectedConversation] =
@@ -18,16 +20,6 @@ export function ChatInterface() {
 
 	return (
 		<div className='flex h-[calc(100vh-65px)]'>
-			{/* Mobile menu button */}
-			<Button
-				variant='ghost'
-				size='icon'
-				className='absolute left-4 top-4 md:hidden'
-				onClick={() => setIsMobileMenuOpen(true)}
-			>
-				<Menu className='h-6 w-6' />
-			</Button>
-
 			{/* Conversation list - mobile */}
 			<Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
 				<SheetContent side='left' className='w-[300px] p-0'>
@@ -53,6 +45,47 @@ export function ChatInterface() {
 
 			{/* Chat area */}
 			<div className='flex flex-1 flex-col'>
+				{/* Mobile header */}
+				<div className='flex items-center gap-2 border-b p-4 md:hidden'>
+					{selectedConversation ? (
+						<>
+							<Button
+								variant='ghost'
+								size='icon'
+								className='shrink-0'
+								onClick={() => setSelectedConversation(undefined)}
+							>
+								<ChevronLeft className='h-5 w-5' />
+							</Button>
+							<div className='flex items-center gap-2'>
+								<Avatar className='h-8 w-8'>
+									<AvatarImage
+										src={selectedConversation.participants[0]?.profilePicture}
+									/>
+									<AvatarFallback>
+										{getInitials(
+											selectedConversation.participants[0]?.name || ''
+										)}
+									</AvatarFallback>
+								</Avatar>
+								<span className='font-medium'>
+									{selectedConversation.participants[0]?.name}
+								</span>
+							</div>
+						</>
+					) : (
+						<>
+							<button
+								onClick={() => setIsMobileMenuOpen(true)}
+								className='flex items-center gap-2 -ml-2 p-2 hover:bg-accent rounded-md'
+							>
+								<Menu className='h-5 w-5' />
+								<span className='font-medium'>Messages</span>
+							</button>
+						</>
+					)}
+				</div>
+
 				{selectedConversation ? (
 					<>
 						<div className='flex-1 overflow-y-auto'>
