@@ -134,16 +134,6 @@ npm run lint:fix
    - Use MongoDB Compass for visualization
    - Default URL: `mongodb://localhost:27017/triptrack`
 
-2. **Database Backup/Restore**
-
-   ```bash
-   # Backup
-   mongodump --uri="mongodb://localhost:27017/triptrack" --out=./backup
-
-   # Restore
-   mongorestore --uri="mongodb://localhost:27017/triptrack" ./backup
-   ```
-
 ### API Development
 
 1. **Adding New Endpoints**
