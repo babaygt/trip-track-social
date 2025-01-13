@@ -16,23 +16,23 @@ export function RouteFeed() {
 
 	if (status === 'pending')
 		return (
-			<div className='text-center text-foreground h-screen flex items-center justify-center'>
+			<div className='text-center text-foreground h-[50vh] flex items-center justify-center'>
 				Loading...
 			</div>
 		)
 	if (status === 'error')
 		return (
-			<div className='text-center text-foreground h-screen flex items-center justify-center'>
+			<div className='text-center text-foreground h-[50vh] flex items-center justify-center'>
 				Error loading routes
 			</div>
 		)
 
 	return (
-		<div className='max-w-7xl mx-auto'>
-			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8'>
+		<div className='space-y-8'>
+			<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
 				{data.pages.map((page) =>
 					page.data.map((route) => (
-						<div key={route._id} className='flex'>
+						<div key={route._id}>
 							<RouteCard route={route} />
 						</div>
 					))

@@ -7,7 +7,7 @@ export default function HomePage() {
 	return (
 		<div className='min-h-screen bg-background'>
 			<div className='max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8'>
-				<div className='flex justify-between items-center mb-8'>
+				<div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8'>
 					<div>
 						<h1 className='text-3xl font-bold text-foreground'>
 							Discover Routes
@@ -16,15 +16,17 @@ export default function HomePage() {
 							Explore and share travel routes with the community
 						</p>
 					</div>
-					<Link to='/create-route' className='flex items-center gap-2'>
-						<Button className='flex items-center gap-2 px-6 bg-primary text-background hover:bg-primary/90'>
+					<Link to='/create-route'>
+						<Button className='w-full sm:w-auto flex items-center gap-2 px-6 bg-primary text-background hover:bg-primary/90'>
 							<Plus className='h-4 w-4 text-background' />
 							Create Route
 						</Button>
 					</Link>
 				</div>
 
-				<RouteFeed />
+				<div className='max-w-6xl mx-auto'>
+					<RouteFeed />
+				</div>
 			</div>
 		</div>
 	)
