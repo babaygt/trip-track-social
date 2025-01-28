@@ -130,7 +130,7 @@ The system integrates with several external services:
 
 ### Swagger/OpenAPI Integration
 
-The API is documented using OpenAPI 3.0 specification through Swagger. The documentation is automatically generated from code annotations and is accessible at `/api-docs` endpoint.
+The API is documented using OpenAPI 3.0 specification through Swagger. The documentation is automatically generated from code annotations and is accessible in local development at `http://localhost:8080/api-docs` and in production at `https://trip-track-backend-33100767116.europe-west3.run.app/api-docs/`.
 
 ### Documentation Structure
 
