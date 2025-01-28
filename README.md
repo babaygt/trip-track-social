@@ -4,7 +4,8 @@ Trip Track is a full-stack web application that allows users to create, share, a
 
 ## 📚 Documentation Overview
 
-- **[API Documentation](http://localhost:8080/api-docs)** - Interactive OpenAPI/Swagger documentation
+- **[API Documentation](https://trip-track-backend-33100767116.europe-west3.run.app/api-docs/)** - Interactive OpenAPI/Swagger documentation
+  - In local development, you can access the API documentation at [http://localhost:8080/api-docs/](http://localhost:8080/api-docs/)
 - **[Data Models](docs/DATA_DOCUMENTATION.md)** - Detailed documentation of data structures and relationships
 - **[Architecture Overview](docs/ARCHITECTURE.md)** - System architecture and design decisions
 - **[Contributing Guide](docs/CONTRIBUTING.md)** - Guidelines for contributing to the project
