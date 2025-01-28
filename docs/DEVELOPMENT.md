@@ -17,8 +17,8 @@ This guide will help you set up your development environment and understand the 
 1. **Clone the Repository**
 
    ```bash
-   git clone https://github.com/yourusername/trip-track-v2.git
-   cd trip-track-v2
+   git clone https://github.com/babaygt/trip-track-social.git
+   cd trip-track-social
    ```
 
 2. **Environment Configuration**
